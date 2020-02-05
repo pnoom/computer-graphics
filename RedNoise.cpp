@@ -9,8 +9,8 @@
 using namespace std;
 using namespace glm;
 
-#define WIDTH 320
-#define HEIGHT 240
+#define WIDTH 500
+#define HEIGHT 500
 
 void draw();
 void update();
@@ -20,16 +20,18 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
 void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle);
+void loadPPM(char *imageName);
 
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to);
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
-CanvasTriangle triangle(CanvasPoint(50, 100), CanvasPoint(0, 80), CanvasPoint(90, 200), Colour(0, 0, 0));
+CanvasTriangle triangle(CanvasPoint(50, 100), CanvasPoint(0, 80), CanvasPoint(90, 200), Colour(255, 0, 0));
 
 float max(float A, float B) { if (A > B) return A; return B; }
-uint32_t ColourPacker(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
+uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
+uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
 int main(int argc, char* argv[])
 {
@@ -39,6 +41,7 @@ int main(int argc, char* argv[])
   {
     // We MUST poll for events - otherwise the window will freeze !
     if(window.pollForInputEvents(&event)) handleEvent(event);
+    loadPPM("texture.ppm");
     update();
     draw();
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
@@ -96,7 +99,7 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
     CanvasPoint pixel = interp_line.at((int)i);
     float x = pixel.x;
     float y = pixel.y;
-    window.setPixelColour(x, y, ColourPacker(colour));
+    window.setPixelColour(x, y, get_rgb(colour));
   }
 }
 
@@ -140,27 +143,74 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   CanvasPoint point4(x4, triangle.vertices[1].y);
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
   CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
-  CanvasTriangle bot_Triangle(point4, triangle.vertices[1], triangle.vertices[2], triangle.colour);
+  CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour);
   //drawStrokedTriangle(top_Triangle);
   //drawStrokedTriangle(bot_Triangle);
   equateTriangles(top_Triangle, top);
   equateTriangles(bot_Triangle, bottom);
 }
 
+void fillFlatBaseTriangle(CanvasTriangle triangle) {
+  std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
+  std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
+
+  for (uint i = 0; i < side1.size(); i++) {
+    for (uint j = 0; j < side2.size(); j++) {
+      drawLine(side1.at(i), side2.at(j), triangle.colour);
+    }
+  }
+}
+
 void drawFilledTriangle(CanvasTriangle triangle) {
   CanvasTriangle triangles[2];
   getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
+
   drawStrokedTriangle(triangles[0]);
   drawStrokedTriangle(triangles[1]);
+  fillFlatBaseTriangle(triangles[0]);
+  fillFlatBaseTriangle(triangles[1]);
 }
 
-uint32_t get_rgb(vec3 rgb) {
-  uint32_t result = (255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2]);
-  return result;
+void parse_size(char *size, int height, int width) {
+  height = 395;
+  width = 480;
 }
 
-void draw()
-{
+int parse_maxcolour(char *maxcolour) {
+  return 255;
+}
+
+void loadPPM(char *imageName) {
+  /*
+  FILE* f = fopen(imageName, "r");
+  char buf_p_six[10], buf_size[20], buf_maxcolour[10], buf[3];
+  int height, width, maxcolour;
+  bool loaded_PPM = true;
+
+  if (f == NULL) loaded_PPM = false;
+  else {
+    fgets(buf_p_six, 100, f);
+    if(buf_p_six[0] != 'P' && buf_p_six[1] != '6') loaded_PPM = false;
+    fgets(buf_size, 100, f);
+    parse_size(buf_size, height, width);
+    fgets(buf_maxcolour, 100, f);
+    maxcolour = parse_maxcolour(buf_maxcolour);
+
+    int x = 0, y = 0;
+    while(!feof(f) && loaded_PPM) {
+      if (fgets(buf, 3, f) == NULL) loaded_PPM = false;
+      uint32_t colour = (buf[0] << 16) + (buf[1] << 8) + buf[2];
+      window.setPixelColour(x, y, colour);
+      x++;
+      y++;
+      if (x == width) x = 0;
+    }
+    fclose(f);
+  }
+  */
+}
+
+void draw() {
   window.clearPixels();
 
   for(int y=0; y<window.height ;y++) {
@@ -173,13 +223,11 @@ void draw()
   drawFilledTriangle(triangle);
 }
 
-void update()
-{
+void update() {
   // Function for performing animation (shifting artifacts or moving the camera)
 }
 
-void handleEvent(SDL_Event event)
-{
+void handleEvent(SDL_Event event) {
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
     else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
