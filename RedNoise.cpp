@@ -68,6 +68,22 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
   return v;
 }
 
+std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
+  float delta_X  = P1.x - P2.x;
+  float delta_Y  = P1.y - P2.y;
+  float no_steps = max(abs(delta_X), abs(delta_Y));
+  //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
+  float stepSize_X = delta_X / no_steps;
+  float stepSize_Y = delta_Y / no_steps;
+
+  std::vector<CanvasPoint> v;
+  for (float i = 0.0; i < no_steps; i++) {
+    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
+    v.push_back(interp_point);
+  }
+  return v;
+}
+
 float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t ColourPacker(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 
