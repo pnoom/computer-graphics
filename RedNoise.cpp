@@ -16,17 +16,19 @@ void draw();
 void update();
 void handleEvent(SDL_Event event);
 void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colour);
+void drawStrokedTriangle(float x1, float x2, float x3, float y1, float y2, float y3, uint32_t colour);
+void sortTrianglePoints(CanvasTriangle *triangle);
+void drawFilledTriangle(CanvasTriangle triangle);
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
+CanvasTriangle triangle(CanvasPoint(50, 100), CanvasPoint(0, 80), CanvasPoint(90, 200), Colour(0, 0, 0));
+
 
 int main(int argc, char* argv[])
 {
-  interpolate(2.2, 8.5, 7);
-  vec3 from( 1, 4, 9.2 );
-  vec3 to( 4, 1, 9.8 );
-  interpolate_vec3(from, to, 4);
+  sortTrianglePoints(&triangle);
   SDL_Event event;
   while(true)
   {
@@ -84,6 +86,42 @@ void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colou
   }
 }
 
+void drawStrokedTriangle(float x1, float x2, float x3, float y1, float y2, float y3, uint32_t colour) {
+  drawLine(x1, y1, x2, y2, colour);
+  drawLine(x2, y2, x3, y3, colour);
+  drawLine(x1, y1, x3, y3, colour);
+}
+
+void sortTrianglePoints(CanvasTriangle *triangle) {
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      if (triangle->vertices[i].y < triangle->vertices[j].y) swap(triangle->vertices[i], triangle->vertices[j]);
+    }
+  }
+  //std::cout << triangle.vertices[0].y << " " << triangle.vertices[1].y << " " << triangle.vertices[2].y << '\n';
+}
+
+void drawFilledTriangle(CanvasTriangle triangle) {
+  float x4;
+
+  float delta_X  = triangle.vertices[0].x - triangle.vertices[2].x;
+  float delta_Y  = triangle.vertices[0].y - triangle.vertices[2].y;
+  float no_steps = max(abs(delta_X), abs(delta_Y));
+
+  float stepSize_X = delta_X / no_steps;
+  float stepSize_Y = delta_Y / no_steps;
+
+  for (float i = 0.0; i < no_steps; i++) {
+    if (round(triangle.vertices[1].y) == round(triangle.vertices[2].y + (i * stepSize_Y)))
+      x4 = triangle.vertices[2].x + (i * stepSize_X);
+  }
+
+  CanvasPoint point4(x4, triangle.vertices[1].y);
+
+  drawStrokedTriangle(triangle.vertices[0].x, triangle.vertices[1].x, point4.x, triangle.vertices[0].y, triangle.vertices[1].y, point4.y, 0);
+  drawStrokedTriangle(triangle.vertices[1].x, triangle.vertices[2].x, point4.x, triangle.vertices[1].y, triangle.vertices[2].y, point4.y, 0);
+}
+
 uint32_t get_rgb(vec3 rgb) {
   uint32_t result = (255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2]);
   return result;
@@ -99,11 +137,8 @@ void draw()
       window.setPixelColour(x, y, colour);
     }
   }
-  uint32_t lineColour = 0;
-  drawLine(50, 50, 100, 100, lineColour);
-  drawLine(50, 50, 50, 100, lineColour);
-  drawLine(50, 50, 100, 50, lineColour);
-  drawLine(100, 50, 50, 100, lineColour);
+
+  drawFilledTriangle(triangle);
 }
 
 void update()
