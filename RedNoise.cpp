@@ -15,8 +15,9 @@ using namespace glm;
 void draw();
 void update();
 void handleEvent(SDL_Event event);
-void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colour);
-void drawStrokedTriangle(float x1, float x2, float x3, float y1, float y2, float y3, uint32_t colour);
+uint32_t ColourPacker(Colour inputColour);
+void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
+void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle);
 std::vector<double> interpolate(double from, double to, int numberOfValues);
@@ -24,7 +25,6 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 CanvasTriangle triangle(CanvasPoint(50, 100), CanvasPoint(0, 80), CanvasPoint(90, 200), Colour(0, 0, 0));
-
 
 int main(int argc, char* argv[])
 {
@@ -69,10 +69,11 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
 }
 
 float max(float A, float B) { if (A > B) return A; return B; }
+uint32_t ColourPacker(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 
-void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colour) {
-  float delta_X  = to_X - from_X;
-  float delta_Y  = to_Y - from_Y;
+void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
+  float delta_X  = P1.x - P2.x;
+  float delta_Y  = P1.y - P2.y;
   float no_steps = max(abs(delta_X), abs(delta_Y));
   //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
   float stepSize_X = delta_X / no_steps;
@@ -80,16 +81,16 @@ void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colou
   //std::cout << "StepSizes: X: " << stepSize_X << " Y: " << stepSize_Y << '\n';
 
   for (float i = 0.0; i < no_steps; i++) {
-    float x = from_X + (i * stepSize_X);
-    float y = from_Y + (i * stepSize_Y);
-    window.setPixelColour(x, y, colour);
+    float x = P2.x + (i * stepSize_X);
+    float y = P2.y + (i * stepSize_Y);
+    window.setPixelColour(x, y, ColourPacker(colour));
   }
 }
 
-void drawStrokedTriangle(float x1, float x2, float x3, float y1, float y2, float y3, uint32_t colour) {
-  drawLine(x1, y1, x2, y2, colour);
-  drawLine(x2, y2, x3, y3, colour);
-  drawLine(x1, y1, x3, y3, colour);
+void drawStrokedTriangle(CanvasTriangle triangle) {
+  drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
+  drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
+  drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
 }
 
 void sortTrianglePoints(CanvasTriangle *triangle) {
@@ -101,7 +102,15 @@ void sortTrianglePoints(CanvasTriangle *triangle) {
   //std::cout << triangle.vertices[0].y << " " << triangle.vertices[1].y << " " << triangle.vertices[2].y << '\n';
 }
 
-void drawFilledTriangle(CanvasTriangle triangle) {
+void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
+  for (int i = 0; i < 3; i++) {
+    to->vertices[i].x = from.vertices[i].x;
+    to->vertices[i].y = from.vertices[i].y;
+  }
+  to->colour = from.colour;
+}
+
+void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasTriangle *bottom) {
   float x4;
 
   float delta_X  = triangle.vertices[0].x - triangle.vertices[2].x;
@@ -115,11 +124,21 @@ void drawFilledTriangle(CanvasTriangle triangle) {
     if (round(triangle.vertices[1].y) == round(triangle.vertices[2].y + (i * stepSize_Y)))
       x4 = triangle.vertices[2].x + (i * stepSize_X);
   }
-
   CanvasPoint point4(x4, triangle.vertices[1].y);
+  //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
+  CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
+  CanvasTriangle bot_Triangle(point4, triangle.vertices[1], triangle.vertices[2], triangle.colour);
+  //drawStrokedTriangle(top_Triangle);
+  //drawStrokedTriangle(bot_Triangle);
+  equateTriangles(top_Triangle, top);
+  equateTriangles(bot_Triangle, bottom);
+}
 
-  drawStrokedTriangle(triangle.vertices[0].x, triangle.vertices[1].x, point4.x, triangle.vertices[0].y, triangle.vertices[1].y, point4.y, 0);
-  drawStrokedTriangle(triangle.vertices[1].x, triangle.vertices[2].x, point4.x, triangle.vertices[1].y, triangle.vertices[2].y, point4.y, 0);
+void drawFilledTriangle(CanvasTriangle triangle) {
+  CanvasTriangle triangles[2];
+  getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
+  drawStrokedTriangle(triangles[0]);
+  drawStrokedTriangle(triangles[1]);
 }
 
 uint32_t get_rgb(vec3 rgb) {
