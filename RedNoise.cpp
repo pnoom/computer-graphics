@@ -15,6 +15,7 @@ using namespace glm;
 void draw();
 void update();
 void handleEvent(SDL_Event event);
+void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colour);
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
 
@@ -65,17 +66,23 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
   return v;
 }
 
-/*
-float red = rand() % 255;
-float green = 0.0;
-float blue = 0.0;
-uint32_t colour = (255<<24) + (int(red)<<16) + (int(green)<<8) + int(blue);
+float max(float A, float B) { if (A > B) return A; return B; }
 
-std::vector<double> v = interpolate(0, 255, WIDTH);
-int intensity = (int)(v.at(WIDTH - x - 1));
-uint32_t colour = (255<<24) + (intensity<<16) + (intensity<<8) + intensity;
-return colour;
-*/
+void drawLine(float from_X, float from_Y, float to_X, float to_Y, uint32_t colour) {
+  float delta_X  = to_X - from_X;
+  float delta_Y  = to_Y - from_Y;
+  float no_steps = max(abs(delta_X), abs(delta_Y));
+  //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
+  float stepSize_X = delta_X / no_steps;
+  float stepSize_Y = delta_Y / no_steps;
+  //std::cout << "StepSizes: X: " << stepSize_X << " Y: " << stepSize_Y << '\n';
+
+  for (float i = 0.0; i < no_steps; i++) {
+    float x = from_X + (i * stepSize_X);
+    float y = from_Y + (i * stepSize_Y);
+    window.setPixelColour(x, y, colour);
+  }
+}
 
 uint32_t get_rgb(vec3 rgb) {
   uint32_t result = (255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2]);
@@ -85,20 +92,18 @@ uint32_t get_rgb(vec3 rgb) {
 void draw()
 {
   window.clearPixels();
-  vec3 top_left  (255, 0, 0);
-  vec3 top_right (0, 0, 255);
-  vec3 bot_left  (255, 255, 0);
-  vec3 bot_right (0, 255, 0);
-  std::vector<vec3> left_col  = interpolate_vec3(top_left,  bot_left,  HEIGHT);
-  std::vector<vec3> right_col = interpolate_vec3(top_right, bot_right, HEIGHT);
 
   for(int y=0; y<window.height ;y++) {
-    std::vector<vec3> row = interpolate_vec3(left_col.at(y), right_col.at(y), WIDTH);
     for(int x=0; x<window.width ;x++) {
-      uint32_t colour = get_rgb(row.at(x));
+      uint32_t colour = (0 << 24) + (255 << 16) + (255 << 8) + 255;
       window.setPixelColour(x, y, colour);
     }
   }
+  uint32_t lineColour = 0;
+  drawLine(50, 50, 100, 100, lineColour);
+  drawLine(50, 50, 50, 100, lineColour);
+  drawLine(50, 50, 100, 50, lineColour);
+  drawLine(100, 50, 50, 100, lineColour);
 }
 
 void update()
