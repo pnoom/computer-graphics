@@ -15,16 +15,21 @@ using namespace glm;
 void draw();
 void update();
 void handleEvent(SDL_Event event);
-uint32_t ColourPacker(Colour inputColour);
+
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
 void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle);
+
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
+std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to);
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 CanvasTriangle triangle(CanvasPoint(50, 100), CanvasPoint(0, 80), CanvasPoint(90, 200), Colour(0, 0, 0));
+
+float max(float A, float B) { if (A > B) return A; return B; }
+uint32_t ColourPacker(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 
 int main(int argc, char* argv[])
 {
@@ -69,8 +74,8 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
 }
 
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
-  float delta_X  = P1.x - P2.x;
-  float delta_Y  = P1.y - P2.y;
+  float delta_X  = to.x - from.x;
+  float delta_Y  = to.y - from.y;
   float no_steps = max(abs(delta_X), abs(delta_Y));
   //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
   float stepSize_X = delta_X / no_steps;
@@ -84,21 +89,13 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   return v;
 }
 
-float max(float A, float B) { if (A > B) return A; return B; }
-uint32_t ColourPacker(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
-
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
-  float delta_X  = P1.x - P2.x;
-  float delta_Y  = P1.y - P2.y;
-  float no_steps = max(abs(delta_X), abs(delta_Y));
-  //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
-  float stepSize_X = delta_X / no_steps;
-  float stepSize_Y = delta_Y / no_steps;
-  //std::cout << "StepSizes: X: " << stepSize_X << " Y: " << stepSize_Y << '\n';
+  std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
 
-  for (float i = 0.0; i < no_steps; i++) {
-    float x = P2.x + (i * stepSize_X);
-    float y = P2.y + (i * stepSize_Y);
+  for (float i = 0.0; i < interp_line.size(); i++) {
+    CanvasPoint pixel = interp_line.at((int)i);
+    float x = pixel.x;
+    float y = pixel.y;
     window.setPixelColour(x, y, ColourPacker(colour));
   }
 }
