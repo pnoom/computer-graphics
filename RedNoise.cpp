@@ -26,7 +26,7 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
 void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle);
-void loadPPM(char *imageName);
+uint32_t* loadPPM(char *imageName);
 
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
@@ -38,16 +38,18 @@ float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
   srand((unsigned) time(0));
   SDL_Event event;
   draw();
+
+  loadPPM("texture.ppm");
   while(true)
   {
+
     // We MUST poll for events - otherwise the window will freeze !
     if(window.pollForInputEvents(&event)) handleEvent(event);
-    loadPPM("texture.ppm");
+
     update();
     //draw();
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
@@ -219,34 +221,44 @@ int parse_maxcolour(char *maxcolour) {
   return 255;
 }
 
-void loadPPM(char *imageName) {
-  /*
+uint32_t* loadPPM(char *imageName) {
   FILE* f = fopen(imageName, "r");
-  char buf_p_six[10], buf_size[20], buf_maxcolour[10], buf[3];
+  char buf[64];
   int height, width, maxcolour;
-  bool loaded_PPM = true;
 
-  if (f == NULL) loaded_PPM = false;
-  else {
-    fgets(buf_p_six, 100, f);
-    if(buf_p_six[0] != 'P' && buf_p_six[1] != '6') loaded_PPM = false;
-    fgets(buf_size, 100, f);
-    parse_size(buf_size, height, width);
-    fgets(buf_maxcolour, 100, f);
-    maxcolour = parse_maxcolour(buf_maxcolour);
+  if (f == NULL) {
+    std::cout << "Could not open file." << '\n';
+    exit(1);
+  }
 
-    int x = 0, y = 0;
-    while(!feof(f) && loaded_PPM) {
-      if (fgets(buf, 3, f) == NULL) loaded_PPM = false;
-      uint32_t colour = (buf[0] << 16) + (buf[1] << 8) + buf[2];
-      window.setPixelColour(x, y, colour);
-      x++;
+    fgets(buf, 64, f); // P6
+    fgets(buf, 64, f); // could be GIMP comment
+    if (buf[0] == '#') {
+      fgets(buf, 64, f); // definitely the dimensions
+    }
+    sscanf(buf, "%d %d", &width, &height);
+    fgets(buf, 64, f); // bit depth, should be 255
+    sscanf(buf, "%d", &maxcolour);
+    if (maxcolour != 255) {
+      std::cout << "Unsupported bit depth. Use 255 plz." << '\n';
+      exit(1);
+    }
+    uint8_t linebuf[3 * width];
+
+    uint32_t* ppm_image = (uint32_t*)malloc(width*height*sizeof(uint32_t));
+
+    int y = 0;
+    while(!feof(f)) {
+      int nread = fread(&linebuf, 1, 3*width, f);
+      for (int i = 0; i < width; i++) {
+        uint32_t colour = (linebuf[3*i] << 16) + (linebuf[3*i + 1] << 8) + linebuf[3*i + 2];
+        ppm_image[y*width + i] = colour;
+        window.setPixelColour(i, y, colour);
+      }
       y++;
-      if (x == width) x = 0;
     }
     fclose(f);
-  }
-  */
+    return ppm_image;
 }
 
 void clearScreen() {
