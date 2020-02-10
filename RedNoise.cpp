@@ -154,13 +154,14 @@ void fillFlatBaseTriangle(CanvasTriangle triangle) {
   std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
 
-  
+  /*
   if (side1.size() > side2.size()) {
     std::vector<CanvasPoint> tmp = side1;
     side1 = side2;
     side2 = tmp;
     std::cout << "SWITCHED SIDES\n";
   }
+  */
   
   uint last_drawn_y = round(side1.at(0).y);
   drawLine(side1.at(0), side2.at(0), triangle.colour);
