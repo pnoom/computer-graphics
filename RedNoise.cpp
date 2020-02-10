@@ -95,7 +95,7 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
 
-  for (int i = 0; i < interp_line.size(); i++) {
+  for (uint i = 0; i < interp_line.size(); i++) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
@@ -143,7 +143,7 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   CanvasPoint point4(x4, triangle.vertices[1].y);
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
   CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
-  CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour);
+  CanvasTriangle bot_Triangle(triangle.vertices[2], point4, triangle.vertices[1], triangle.colour);
   //drawStrokedTriangle(top_Triangle);
   //drawStrokedTriangle(bot_Triangle);
   equateTriangles(top_Triangle, top);
@@ -162,7 +162,7 @@ void fillFlatBaseTriangle(CanvasTriangle triangle) {
     std::cout << "SWITCHED SIDES\n";
   }
   */
-  
+  std::cout << "side1.size() " << side1.size() << " side2.size() " << side2.size() << "\n";
   uint last_drawn_y = round(side1.at(0).y);
   drawLine(side1.at(0), side2.at(0), triangle.colour);
   for (uint i = 0; i < side1.size(); i++) {
@@ -171,7 +171,7 @@ void fillFlatBaseTriangle(CanvasTriangle triangle) {
       while (round(side2.at(j).y) <= last_drawn_y) {
 	j++;
       }
-      // std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y) << "\n";
+      std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y) << "\n";
       drawLine(side1.at(i), side2.at(j), triangle.colour);
       last_drawn_y++;
     }
@@ -184,7 +184,7 @@ void drawFilledTriangle(CanvasTriangle triangle) {
 
   drawStrokedTriangle(triangles[0]);
   drawStrokedTriangle(triangles[1]);
-  fillFlatBaseTriangle(triangles[0]);
+  //fillFlatBaseTriangle(triangles[0]);
   fillFlatBaseTriangle(triangles[1]);
 }
 
