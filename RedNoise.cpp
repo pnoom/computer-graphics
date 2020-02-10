@@ -143,35 +143,28 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   CanvasPoint point4(x4, triangle.vertices[1].y);
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
   CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
-  CanvasTriangle bot_Triangle(triangle.vertices[2], point4, triangle.vertices[1], triangle.colour);
+  CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour);
   //drawStrokedTriangle(top_Triangle);
   //drawStrokedTriangle(bot_Triangle);
   equateTriangles(top_Triangle, top);
   equateTriangles(bot_Triangle, bottom);
 }
 
-void fillFlatBaseTriangle(CanvasTriangle triangle) {
-  std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
-  std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
+void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B) {
 
-  /*
-  if (side1.size() > side2.size()) {
-    std::vector<CanvasPoint> tmp = side1;
-    side1 = side2;
-    side2 = tmp;
-    std::cout << "SWITCHED SIDES\n";
-  }
-  */
-  std::cout << "side1.size() " << side1.size() << " side2.size() " << side2.size() << "\n";
+  std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[side1_A], triangle.vertices[side1_B]);
+  std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[side2_A], triangle.vertices[side2_B]);
+
+  //std::cout << "side1.size() " << side1.size() << " side2.size() " << side2.size() << "\n";
   uint last_drawn_y = round(side1.at(0).y);
   drawLine(side1.at(0), side2.at(0), triangle.colour);
   for (uint i = 0; i < side1.size(); i++) {
     if (round(side1.at(i).y) != last_drawn_y) {
       int j = 0;
       while (round(side2.at(j).y) <= last_drawn_y) {
-	j++;
+	       j++;
       }
-      std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y) << "\n";
+      //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y) << "\n";
       drawLine(side1.at(i), side2.at(j), triangle.colour);
       last_drawn_y++;
     }
@@ -184,8 +177,8 @@ void drawFilledTriangle(CanvasTriangle triangle) {
 
   drawStrokedTriangle(triangles[0]);
   drawStrokedTriangle(triangles[1]);
-  //fillFlatBaseTriangle(triangles[0]);
-  fillFlatBaseTriangle(triangles[1]);
+  fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2);
+  fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1);
 }
 
 void parse_size(char *size, int height, int width) {
