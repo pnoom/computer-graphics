@@ -5,12 +5,18 @@
 #include <glm/glm.hpp>
 #include <fstream>
 #include <vector>
+#include <ctime>
+#include <algorithm>
 
 using namespace std;
 using namespace glm;
 
 #define WIDTH 500
 #define HEIGHT 500
+
+Colour RED(255, 0, 0);
+Colour GREEN(0, 255, 0);
+Colour BLUE(0, 0, 255);
 
 void draw();
 void update();
@@ -27,7 +33,6 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to);
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
-CanvasTriangle triangle(CanvasPoint(50, 100), CanvasPoint(0, 80), CanvasPoint(90, 200), Colour(255, 0, 0));
 
 float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
@@ -35,15 +40,16 @@ uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (
 
 int main(int argc, char* argv[])
 {
-  sortTrianglePoints(&triangle);
+  srand((unsigned) time(0));
   SDL_Event event;
+  draw();
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
     if(window.pollForInputEvents(&event)) handleEvent(event);
     loadPPM("texture.ppm");
     update();
-    draw();
+    //draw();
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
   }
@@ -103,19 +109,36 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   }
 }
 
+int modulo(int x, int y) {
+  return ((x % y) + x) % y;
+}
+
+void generateTriangle(CanvasTriangle *triangle) {
+  triangle->colour = BLUE;
+  float vertices[6];
+  for (int i = 0; i < 6; i++) {
+    vertices[i] = (float)(modulo(rand(), WIDTH));
+    //std::cout << "point: " << i << " = " << vertices[i] << '\n';
+  }
+
+  triangle->vertices[0] = CanvasPoint(vertices[0], vertices[1]);
+  triangle->vertices[1] = CanvasPoint(vertices[2], vertices[3]);
+  triangle->vertices[2] = CanvasPoint(vertices[4], vertices[5]);
+}
+
 void drawStrokedTriangle(CanvasTriangle triangle) {
   drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
   drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
   drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
 }
 
+bool comparator(CanvasPoint p1, CanvasPoint p2) {
+  return (p1.y < p2.y);
+}
+
 void sortTrianglePoints(CanvasTriangle *triangle) {
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      if (triangle->vertices[i].y < triangle->vertices[j].y) swap(triangle->vertices[i], triangle->vertices[j]);
-    }
-  }
-  //std::cout << triangle.vertices[0].y << " " << triangle.vertices[1].y << " " << triangle.vertices[2].y << '\n';
+  std::sort(std::begin(triangle->vertices), std::end(triangle->vertices), comparator);
+  //std::cout << "SORTED: " << triangle->vertices[0].y << " " << triangle->vertices[1].y << " " << triangle->vertices[2].y << '\n';
 }
 
 void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
@@ -127,6 +150,12 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
 }
 
 void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasTriangle *bottom) {
+  if ((triangle.vertices[0].y == triangle.vertices[1].y) || (triangle.vertices[1].y == triangle.vertices[2].y)) {
+    equateTriangles(triangle, top);
+    equateTriangles(triangle, bottom);
+    //std::cout << "detected a flat triangle!" << '\n';
+    return;
+  }
   float x4;
 
   float delta_X  = triangle.vertices[0].x - triangle.vertices[2].x;
@@ -144,8 +173,7 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
   CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
   CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour);
-  //drawStrokedTriangle(top_Triangle);
-  //drawStrokedTriangle(bot_Triangle);
+
   equateTriangles(top_Triangle, top);
   equateTriangles(bot_Triangle, bottom);
 }
@@ -172,11 +200,12 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
 }
 
 void drawFilledTriangle(CanvasTriangle triangle) {
+  sortTrianglePoints(&triangle);
   CanvasTriangle triangles[2];
   getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
 
-  drawStrokedTriangle(triangles[0]);
-  drawStrokedTriangle(triangles[1]);
+  //drawStrokedTriangle(triangles[0]);
+  //drawStrokedTriangle(triangles[1]);
   fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2);
   fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1);
 }
@@ -220,7 +249,8 @@ void loadPPM(char *imageName) {
   */
 }
 
-void draw() {
+void clearScreen() {
+  //Draws a white empty screen
   window.clearPixels();
 
   for(int y=0; y<window.height ;y++) {
@@ -229,8 +259,10 @@ void draw() {
       window.setPixelColour(x, y, colour);
     }
   }
+}
 
-  drawFilledTriangle(triangle);
+void draw() {
+  clearScreen();
 }
 
 void update() {
@@ -244,5 +276,12 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
     else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
   }
-  else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
+  else if(event.type == SDL_MOUSEBUTTONDOWN) {
+    clearScreen();
+    //CanvasTriangle triangle(CanvasPoint(448, 318), CanvasPoint(406, 292), CanvasPoint(40, 172), Colour(255, 0, 0));
+    CanvasTriangle triangle;
+    generateTriangle(&triangle);
+    drawFilledTriangle(triangle);
+    cout << "MOUSE CLICKED" << endl;
+  }
 }
