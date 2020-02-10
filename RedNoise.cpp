@@ -95,11 +95,11 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
 
-  for (float i = 0.0; i < interp_line.size(); i++) {
-    CanvasPoint pixel = interp_line.at((int)i);
+  for (int i = 0; i < interp_line.size(); i++) {
+    CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    window.setPixelColour(x, y, get_rgb(colour));
+    window.setPixelColour(round(x), round(y), get_rgb(colour));
   }
 }
 
@@ -154,9 +154,25 @@ void fillFlatBaseTriangle(CanvasTriangle triangle) {
   std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
 
+  
+  if (side1.size() > side2.size()) {
+    std::vector<CanvasPoint> tmp = side1;
+    side1 = side2;
+    side2 = tmp;
+    std::cout << "SWITCHED SIDES\n";
+  }
+  
+  uint last_drawn_y = round(side1.at(0).y);
+  drawLine(side1.at(0), side2.at(0), triangle.colour);
   for (uint i = 0; i < side1.size(); i++) {
-    for (uint j = 0; j < side2.size(); j++) {
+    if (round(side1.at(i).y) != last_drawn_y) {
+      int j = 0;
+      while (round(side2.at(j).y) <= last_drawn_y) {
+	j++;
+      }
+      // std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y) << "\n";
       drawLine(side1.at(i), side2.at(j), triangle.colour);
+      last_drawn_y++;
     }
   }
 }
