@@ -14,9 +14,7 @@ using namespace glm;
 #define WIDTH 500
 #define HEIGHT 500
 
-Colour RED(255, 0, 0);
-Colour GREEN(0, 255, 0);
-Colour BLUE(0, 0, 255);
+Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 
 void draw();
 void update();
@@ -26,7 +24,7 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
 void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle);
-uint32_t* loadPPM(char *imageName);
+uint32_t* loadPPM(string imageName);
 
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
@@ -116,22 +114,24 @@ int modulo(int x, int y) {
 }
 
 void generateTriangle(CanvasTriangle *triangle) {
-  triangle->colour = BLUE;
   float vertices[6];
+  //std::cout << "VERTICES: ";
   for (int i = 0; i < 6; i++) {
     vertices[i] = (float)(modulo(rand(), WIDTH));
-    //std::cout << "point: " << i << " = " << vertices[i] << '\n';
   }
-
+  //for (int i = 0; i < 3; i++) std::cout << i << ": (" << vertices[i * 2] << ", " << vertices[i * 2 + 1] << ") ";
+  //std::cout << '\n';
   triangle->vertices[0] = CanvasPoint(vertices[0], vertices[1]);
   triangle->vertices[1] = CanvasPoint(vertices[2], vertices[3]);
   triangle->vertices[2] = CanvasPoint(vertices[4], vertices[5]);
+  //triangle->colour = COLOURS[modulo(rand(), 3)];
+  triangle->colour = Colour(255, 255, 255);
 }
 
 void drawStrokedTriangle(CanvasTriangle triangle) {
-  drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
-  drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
-  drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
+  drawLine(triangle.vertices[0], triangle.vertices[1], Colour(0,0,0));
+  drawLine(triangle.vertices[0], triangle.vertices[2], Colour(0,0,0));
+  drawLine(triangle.vertices[1], triangle.vertices[2], Colour(0,0,0));
 }
 
 bool comparator(CanvasPoint p1, CanvasPoint p2) {
@@ -191,11 +191,12 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   for (uint i = 0; i < side1.size(); i++) {
     if (round(side1.at(i).y) != last_drawn_y) {
       int j = 0;
-      while (round(side2.at(j).y) <= last_drawn_y) {
+      while ((j < (int)side2.size() - 1) && (round(side2.at(j).y) <= last_drawn_y)) {
 	       j++;
       }
-      //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y) << "\n";
+      //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y);
       drawLine(side1.at(i), side2.at(j), triangle.colour);
+      //std::cout << " DRAWN" << '\n';
       last_drawn_y++;
     }
   }
@@ -206,10 +207,10 @@ void drawFilledTriangle(CanvasTriangle triangle) {
   CanvasTriangle triangles[2];
   getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
 
-  //drawStrokedTriangle(triangles[0]);
-  //drawStrokedTriangle(triangles[1]);
   fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2);
   fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1);
+  drawStrokedTriangle(triangles[0]);
+  drawStrokedTriangle(triangles[1]);
 }
 
 void parse_size(char *size, int height, int width) {
@@ -221,8 +222,8 @@ int parse_maxcolour(char *maxcolour) {
   return 255;
 }
 
-uint32_t* loadPPM(char *imageName) {
-  FILE* f = fopen(imageName, "r");
+uint32_t* loadPPM(string imageName) {
+  FILE* f = fopen(imageName.c_str(), "r");
   char buf[64];
   int height, width, maxcolour;
 
@@ -249,7 +250,7 @@ uint32_t* loadPPM(char *imageName) {
 
     int y = 0;
     while(!feof(f)) {
-      int nread = fread(&linebuf, 1, 3*width, f);
+      fread(&linebuf, 1, 3*width, f);
       for (int i = 0; i < width; i++) {
         uint32_t colour = (linebuf[3*i] << 16) + (linebuf[3*i + 1] << 8) + linebuf[3*i + 2];
         ppm_image[y*width + i] = colour;
@@ -273,11 +274,18 @@ void clearScreen() {
   }
 }
 
+void drawRandomTriangle() {
+  CanvasTriangle triangle;
+  generateTriangle(&triangle);
+  drawFilledTriangle(triangle);
+}
+
 void draw() {
   clearScreen();
 }
 
 void update() {
+  drawRandomTriangle();
   // Function for performing animation (shifting artifacts or moving the camera)
 }
 
@@ -289,11 +297,9 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) {
-    clearScreen();
+    //clearScreen();
     //CanvasTriangle triangle(CanvasPoint(448, 318), CanvasPoint(406, 292), CanvasPoint(40, 172), Colour(255, 0, 0));
-    CanvasTriangle triangle;
-    generateTriangle(&triangle);
-    drawFilledTriangle(triangle);
+    drawRandomTriangle();
     cout << "MOUSE CLICKED" << endl;
   }
 }
