@@ -291,7 +291,7 @@ bool isemptyline(char* line) {
   return line[0] == '\n';
 }
 
-void loadMTL(string filename) {
+unordered_map<string, Colour> loadMTL(string filename) {
   FILE* f = fopen(filename.c_str(), "r");
   int bufsize = 200;
   char buf[bufsize];
@@ -331,7 +331,7 @@ void loadMTL(string filename) {
       }
     }
   }
-  std::cout << "size of hashmap: " << materials.size() << '\n';
+  return materials;
 }
 
 void clearScreen() {
@@ -390,7 +390,8 @@ int main(int argc, char* argv[]) {
   draw();
 
   the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
-  loadMTL("cornell-box.mtl");
+  unordered_map<string, Colour> materials = loadMTL("cornell-box.mtl");
+  std::cout << "size of hashmap: " << materials.size() << '\n';
 
   while(true)
   {
