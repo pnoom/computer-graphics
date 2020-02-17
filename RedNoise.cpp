@@ -23,8 +23,10 @@ void handleEvent(SDL_Event event);
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
 void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
-void drawFilledTriangle(CanvasTriangle triangle);
-uint32_t* loadPPM(string imageName);
+void drawFilledTriangle(CanvasTriangle triangle, bool textured);
+uint32_t* loadPPM(string imageName, int* the_width, int* the_height);
+uint32_t* the_image;
+int the_image_width, the_image_height;
 
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
@@ -41,7 +43,7 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
   draw();
 
-  loadPPM("texture.ppm");
+  the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
   while(true)
   {
 
@@ -105,24 +107,6 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   return v;
 }
 
-/*
-std::vector<TexturePoint> interpolate_texture_line(TexturePoint from, TexturePoint to) {
-  float delta_X  = to.x - from.x;
-  float delta_Y  = to.y - from.y;
-  float no_steps = max(abs(delta_X), abs(delta_Y));
-  //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
-  float stepSize_X = delta_X / no_steps;
-  float stepSize_Y = delta_Y / no_steps;
-
-  std::vector<TexturePoint> v;
-  for (float i = 0.0; i < no_steps; i++) {
-    TexturePoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
-    v.push_back(interp_point);
-  }
-  return v;
-}
-*/
-
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
 
@@ -131,6 +115,22 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
     float x = pixel.x;
     float y = pixel.y;
     window.setPixelColour(round(x), round(y), get_rgb(colour));
+  }
+}
+
+uint32_t get_textured_pixel(TexturePoint texturePoint) {
+  return the_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image_width))];
+}
+
+void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
+  std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
+
+  for (uint i = 0; i < interp_line.size(); i++) {
+    CanvasPoint pixel = interp_line.at(i);
+    float x = pixel.x;
+    float y = pixel.y;
+    uint32_t colour = get_textured_pixel(pixel.texturePoint);
+    window.setPixelColour(round(x), round(y), colour);
   }
 }
 
@@ -188,28 +188,6 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
     return;
   }
 
-  /*
-  float x4;
-
-  float delta_X  = triangle.vertices[0].x - triangle.vertices[2].x;
-  float delta_Y  = triangle.vertices[0].y - triangle.vertices[2].y;
-  float no_steps = max(abs(delta_X), abs(delta_Y));
-
-  float stepSize_X = delta_X / no_steps;
-  float stepSize_Y = delta_Y / no_steps;
-
-  for (float i = 0.0; i < no_steps; i++) {
-    if (round(triangle.vertices[1].y) == round(triangle.vertices[2].y + (i * stepSize_Y)))
-      x4 = triangle.vertices[2].x + (i * stepSize_X);
-
-  }
-
-  CanvasPoint point4(x4, triangle.vertices[1].y);
-
-  TexturePoint point4_tp(-1, -1);
-  point4.texturePoint = point4_tp;
-  */
-
   CanvasPoint point4;
   std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
   for (float i = 0.0; i < v.size(); i++) {
@@ -226,7 +204,7 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   equateTriangles(bot_Triangle, bottom);
 }
 
-void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B) {
+void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B, bool textured) {
 
   std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[side1_A], triangle.vertices[side1_B]);
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[side2_A], triangle.vertices[side2_B]);
@@ -241,39 +219,55 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
 	       j++;
       }
       //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y);
-      drawLine(side1.at(i), side2.at(j), triangle.colour);
+      if (!textured) drawLine(side1.at(i), side2.at(j), triangle.colour);
+      else drawTexturedLine(side1.at(i), side2.at(j));
       //std::cout << " DRAWN" << '\n';
       last_drawn_y++;
     }
   }
 }
 
-void drawFilledTriangle(CanvasTriangle triangle) {
+void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   sortTrianglePoints(&triangle);
   CanvasTriangle triangles[2];
   getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
 
-  fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2);
-  fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1);
-  drawStrokedTriangle(triangles[0]);
-  drawStrokedTriangle(triangles[1]);
+  fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
+  fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
+
+  if (!textured) {
+    drawStrokedTriangle(triangles[0]);
+    drawStrokedTriangle(triangles[1]);
+  }
 }
 
 void drawTextureMappedTriangle() {
+  CanvasPoint p1(160, 10);
+  CanvasPoint p2(300, 230);
+  CanvasPoint p3(10, 150);
+  p1.texturePoint = TexturePoint(195, 5);
+  p2.texturePoint = TexturePoint(395, 380);
+  p3.texturePoint = TexturePoint(65, 330);
 
+  CanvasTriangle triangle(p1, p2, p3);
+  std::cout << "p1.tp.x: " << p1.texturePoint.x << " p1.tp.y: " << p1.texturePoint.y << '\n';
+  std::cout << "p2.tp.x: " << p2.texturePoint.x << " p2.tp.y: " << p2.texturePoint.y << '\n';
+  std::cout << "p3.tp.x: " << p3.texturePoint.x << " p3.tp.y: " << p3.texturePoint.y << '\n';
+
+  drawFilledTriangle(triangle, true);
 }
 
 void drawRandomTriangle(bool filled) {
   CanvasTriangle triangle;
   generateTriangle(&triangle);
-  if (filled) drawFilledTriangle(triangle);
+  if (filled) drawFilledTriangle(triangle, false);
   else drawStrokedTriangle(triangle);
 }
 
-uint32_t* loadPPM(string imageName) {
+uint32_t* loadPPM(string imageName, int* the_width, int* the_height) {
   FILE* f = fopen(imageName.c_str(), "r");
   char buf[64];
-  int height, width, maxcolour;
+  int width, height, maxcolour;
 
   if (f == NULL) {
     std::cout << "Could not open file." << '\n';
@@ -307,6 +301,8 @@ uint32_t* loadPPM(string imageName) {
       y++;
     }
     fclose(f);
+    *the_width = width;
+    *the_height = height;
     return ppm_image;
 }
 
