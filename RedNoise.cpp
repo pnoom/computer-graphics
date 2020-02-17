@@ -105,8 +105,8 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   return v;
 }
 
-std::vector<TexturePoint> interpolate_texture_line(TexturePoint from, TexturePoint to) {
 /*
+std::vector<TexturePoint> interpolate_texture_line(TexturePoint from, TexturePoint to) {
   float delta_X  = to.x - from.x;
   float delta_Y  = to.y - from.y;
   float no_steps = max(abs(delta_X), abs(delta_Y));
@@ -114,16 +114,14 @@ std::vector<TexturePoint> interpolate_texture_line(TexturePoint from, TexturePoi
   float stepSize_X = delta_X / no_steps;
   float stepSize_Y = delta_Y / no_steps;
 
-  std::vector<CanvasPoint> v;
+  std::vector<TexturePoint> v;
   for (float i = 0.0; i < no_steps; i++) {
-    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
+    TexturePoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
     v.push_back(interp_point);
   }
   return v;
-  */
-  std::vector<TexturePoint> v;
-  return v;
 }
+*/
 
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
@@ -186,6 +184,8 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
     //std::cout << "detected a flat triangle!" << '\n';
     return;
   }
+
+  /*
   float x4;
 
   float delta_X  = triangle.vertices[0].x - triangle.vertices[2].x;
@@ -198,13 +198,22 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   for (float i = 0.0; i < no_steps; i++) {
     if (round(triangle.vertices[1].y) == round(triangle.vertices[2].y + (i * stepSize_Y)))
       x4 = triangle.vertices[2].x + (i * stepSize_X);
-      
+
   }
 
   CanvasPoint point4(x4, triangle.vertices[1].y);
 
   TexturePoint point4_tp(-1, -1);
   point4.texturePoint = point4_tp;
+  */
+
+  CanvasPoint point4;
+  std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
+  for (float i = 0.0; i < v.size(); i++) {
+    if (round(v.at(i).y) == round(triangle.vertices[1].y)) {
+      point4 = v.at(i);
+    }
+  }
 
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
   CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
@@ -251,10 +260,11 @@ void drawTextureMappedTriangle() {
 
 }
 
-void drawRandomTriangle() {
+void drawRandomTriangle(bool filled) {
   CanvasTriangle triangle;
   generateTriangle(&triangle);
-  drawFilledTriangle(triangle);
+  if (filled) drawFilledTriangle(triangle);
+  else drawStrokedTriangle(triangle);
 }
 
 uint32_t* loadPPM(string imageName) {
@@ -328,15 +338,21 @@ void handleEvent(SDL_Event event) {
       cout << "T: DRAWING TEXTUREMAPPED TRIANGLE" << endl;
       drawTextureMappedTriangle();
     }
+    else if(event.key.keysym.sym == SDLK_f) {
+      //clearScreen();
+      //CanvasTriangle triangle(CanvasPoint(448, 318), CanvasPoint(406, 292), CanvasPoint(40, 172), Colour(255, 0, 0));
+      cout << "F: DRAWING RANDOM FILLED TRIANGLE" << endl;
+      drawRandomTriangle(true);
+    }
+    else if(event.key.keysym.sym == SDLK_s) {
+      cout << "C: DRAWING RANDOM STROKED TRIANGLE" << endl;
+      drawRandomTriangle(false);
+    }
     else if(event.key.keysym.sym == SDLK_c) {
       cout << "C: CLEARING SCREEN" << endl;
       clearScreen();
     }
   }
-  else if(event.type == SDL_MOUSEBUTTONDOWN) {
-    //clearScreen();
-    //CanvasTriangle triangle(CanvasPoint(448, 318), CanvasPoint(406, 292), CanvasPoint(40, 172), Colour(255, 0, 0));
-    cout << "MOUSE CLICKED: DRAWING RANDOM TRIANGLE" << endl;
-    drawRandomTriangle();
-  }
+  else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
+
 }
