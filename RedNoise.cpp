@@ -184,7 +184,7 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
     triangle.vertices[2] = temp;
     equateTriangles(triangle, top);
     equateTriangles(triangle, bottom);
-    std::cout << "detected a flat triangle!" << '\n';
+    //std::cout << "detected a flat triangle!" << '\n';
     return;
   }
 
@@ -211,7 +211,10 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
 
   //std::cout << "side1.size() " << side1.size() << " side2.size() " << side2.size() << "\n";
   uint last_drawn_y = round(side1.at(0).y);
-  drawLine(side1.at(0), side2.at(0), triangle.colour);
+
+  if (textured) drawTexturedLine(side1.at(0), side2.at(0));
+  else drawLine(side1.at(0), side2.at(0), triangle.colour);
+
   for (uint i = 0; i < side1.size(); i++) {
     if (round(side1.at(i).y) != last_drawn_y) {
       int j = 0;
@@ -219,8 +222,8 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
 	       j++;
       }
       //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y);
-      if (!textured) drawLine(side1.at(i), side2.at(j), triangle.colour);
-      else drawTexturedLine(side1.at(i), side2.at(j));
+      if (textured) drawTexturedLine(side1.at(i), side2.at(j));
+      else drawLine(side1.at(i), side2.at(j), triangle.colour);
       //std::cout << " DRAWN" << '\n';
       last_drawn_y++;
     }
@@ -234,11 +237,6 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
 
   fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
   fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
-
-  if (!textured) {
-    drawStrokedTriangle(triangles[0]);
-    drawStrokedTriangle(triangles[1]);
-  }
 }
 
 void drawTextureMappedTriangle() {
@@ -296,7 +294,7 @@ uint32_t* loadPPM(string imageName, int* the_width, int* the_height) {
       for (int i = 0; i < width; i++) {
         uint32_t colour = (linebuf[3*i] << 16) + (linebuf[3*i + 1] << 8) + linebuf[3*i + 2];
         ppm_image[y*width + i] = colour;
-        window.setPixelColour(i, y, colour);
+        //window.setPixelColour(i, y, colour);
       }
       y++;
     }
