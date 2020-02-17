@@ -7,6 +7,8 @@
 #include <vector>
 #include <ctime>
 #include <algorithm>
+#include <unordered_map>
+#include <string>
 
 using namespace std;
 using namespace glm;
@@ -37,25 +39,6 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
-
-int main(int argc, char* argv[]) {
-  srand((unsigned) time(0));
-  SDL_Event event;
-  draw();
-
-  the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
-  while(true)
-  {
-
-    // We MUST poll for events - otherwise the window will freeze !
-    if(window.pollForInputEvents(&event)) handleEvent(event);
-
-    update();
-    //draw();
-    // Need to render the frame at the end, or nothing actually gets shown on the screen !
-    window.renderFrame();
-  }
-}
 
 std::vector<double> interpolate(double from, double to, int numberOfValues) {
   double delta = (to - from) / (numberOfValues - 1);
@@ -304,6 +287,53 @@ uint32_t* loadPPM(string imageName, int* the_width, int* the_height) {
     return ppm_image;
 }
 
+bool isemptyline(char* line) {
+  return line[0] == '\n';
+}
+
+void loadMTL(string filename) {
+  FILE* f = fopen(filename.c_str(), "r");
+  int bufsize = 200;
+  char buf[bufsize];
+
+  unordered_map<string, Colour> materials;
+
+  if (f == NULL) {
+    std::cout << "Could not open file." << '\n';
+    exit(1);
+  }
+
+  std::string* tokens;
+
+  string matName;
+  float rgb[3];
+
+  while (!feof(f)) {
+    fgets(buf, bufsize, f);
+    if (isemptyline(buf)) continue;
+    tokens = split(buf, ' ');
+    //std::cout << "tokens[0]" << tokens[0] << '\n';
+    if (tokens[0] == "newmtl") {
+      matName = tokens[1];
+      fgets(buf, bufsize, f);
+      tokens = split(buf, ' ');
+      if (tokens[0] != "Kd") {
+        std::cout << "Line after 'newmtl' should be 'Kd r g b'" << '\n';
+        exit(1);
+      }
+      else {
+        size_t stof_thing;
+        for (int i=0; i<3; i++) {
+          rgb[i] = stof(tokens[i+1], &stof_thing);
+        }
+        Colour col(matName, 255*round(rgb[0]), 255*round(rgb[1]), 255*round(rgb[2]));
+        materials[matName] = col;
+      }
+    }
+  }
+  std::cout << "size of hashmap: " << materials.size() << '\n';
+}
+
 void clearScreen() {
   //Draws a white empty screen
   window.clearPixels();
@@ -352,4 +382,25 @@ void handleEvent(SDL_Event event) {
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 
+}
+
+int main(int argc, char* argv[]) {
+  srand((unsigned) time(0));
+  SDL_Event event;
+  draw();
+
+  the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
+  loadMTL("cornell-box.mtl");
+
+  while(true)
+  {
+
+    // We MUST poll for events - otherwise the window will freeze !
+    if(window.pollForInputEvents(&event)) handleEvent(event);
+
+    update();
+    //draw();
+    // Need to render the frame at the end, or nothing actually gets shown on the screen !
+    window.renderFrame();
+  }
 }
