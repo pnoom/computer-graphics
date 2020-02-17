@@ -179,9 +179,12 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
 
 void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasTriangle *bottom) {
   if ((triangle.vertices[0].y == triangle.vertices[1].y) || (triangle.vertices[1].y == triangle.vertices[2].y)) {
+    CanvasPoint temp = triangle.vertices[1];
+    triangle.vertices[1] = triangle.vertices[2];
+    triangle.vertices[2] = temp;
     equateTriangles(triangle, top);
     equateTriangles(triangle, bottom);
-    //std::cout << "detected a flat triangle!" << '\n';
+    std::cout << "detected a flat triangle!" << '\n';
     return;
   }
 
