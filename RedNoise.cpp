@@ -85,6 +85,30 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   float delta_X  = to.x - from.x;
   float delta_Y  = to.y - from.y;
+  float delta_tp_X = to.texturePoint.x - from.texturePoint.x;
+  float delta_tp_Y = to.texturePoint.y - from.texturePoint.y;
+
+  float no_steps = max(abs(delta_X), abs(delta_Y));
+  //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
+  float stepSize_X = delta_X / no_steps;
+  float stepSize_Y = delta_Y / no_steps;
+  float stepSize_tp_X = delta_tp_X / no_steps;
+  float stepSize_tp_Y = delta_tp_Y / no_steps;
+
+  std::vector<CanvasPoint> v;
+  for (float i = 0.0; i < no_steps; i++) {
+    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
+    TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y));
+    interp_point.texturePoint = interp_tp;
+    v.push_back(interp_point);
+  }
+  return v;
+}
+
+std::vector<TexturePoint> interpolate_texture_line(TexturePoint from, TexturePoint to) {
+/*
+  float delta_X  = to.x - from.x;
+  float delta_Y  = to.y - from.y;
   float no_steps = max(abs(delta_X), abs(delta_Y));
   //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
   float stepSize_X = delta_X / no_steps;
@@ -95,6 +119,9 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
     CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
     v.push_back(interp_point);
   }
+  return v;
+  */
+  std::vector<TexturePoint> v;
   return v;
 }
 
@@ -124,8 +151,8 @@ void generateTriangle(CanvasTriangle *triangle) {
   triangle->vertices[0] = CanvasPoint(vertices[0], vertices[1]);
   triangle->vertices[1] = CanvasPoint(vertices[2], vertices[3]);
   triangle->vertices[2] = CanvasPoint(vertices[4], vertices[5]);
-  //triangle->colour = COLOURS[modulo(rand(), 3)];
-  triangle->colour = Colour(255, 255, 255);
+  triangle->colour = COLOURS[modulo(rand(), 3)];
+  //triangle->colour = Colour(255, 255, 255);
 }
 
 void drawStrokedTriangle(CanvasTriangle triangle) {
@@ -147,6 +174,7 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
   for (int i = 0; i < 3; i++) {
     to->vertices[i].x = from.vertices[i].x;
     to->vertices[i].y = from.vertices[i].y;
+    to->vertices[i].texturePoint = from.vertices[i].texturePoint;
   }
   to->colour = from.colour;
 }
@@ -170,8 +198,14 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   for (float i = 0.0; i < no_steps; i++) {
     if (round(triangle.vertices[1].y) == round(triangle.vertices[2].y + (i * stepSize_Y)))
       x4 = triangle.vertices[2].x + (i * stepSize_X);
+      
   }
+
   CanvasPoint point4(x4, triangle.vertices[1].y);
+
+  TexturePoint point4_tp(-1, -1);
+  point4.texturePoint = point4_tp;
+
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
   CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
   CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour);
@@ -213,13 +247,14 @@ void drawFilledTriangle(CanvasTriangle triangle) {
   drawStrokedTriangle(triangles[1]);
 }
 
-void parse_size(char *size, int height, int width) {
-  height = 395;
-  width = 480;
+void drawTextureMappedTriangle() {
+
 }
 
-int parse_maxcolour(char *maxcolour) {
-  return 255;
+void drawRandomTriangle() {
+  CanvasTriangle triangle;
+  generateTriangle(&triangle);
+  drawFilledTriangle(triangle);
 }
 
 uint32_t* loadPPM(string imageName) {
@@ -274,18 +309,12 @@ void clearScreen() {
   }
 }
 
-void drawRandomTriangle() {
-  CanvasTriangle triangle;
-  generateTriangle(&triangle);
-  drawFilledTriangle(triangle);
-}
-
 void draw() {
   clearScreen();
 }
 
 void update() {
-  drawRandomTriangle();
+
   // Function for performing animation (shifting artifacts or moving the camera)
 }
 
@@ -295,11 +324,19 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
     else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
     else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
+    else if(event.key.keysym.sym == SDLK_t) {
+      cout << "T: DRAWING TEXTUREMAPPED TRIANGLE" << endl;
+      drawTextureMappedTriangle();
+    }
+    else if(event.key.keysym.sym == SDLK_c) {
+      cout << "C: CLEARING SCREEN" << endl;
+      clearScreen();
+    }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) {
     //clearScreen();
     //CanvasTriangle triangle(CanvasPoint(448, 318), CanvasPoint(406, 292), CanvasPoint(40, 172), Colour(255, 0, 0));
+    cout << "MOUSE CLICKED: DRAWING RANDOM TRIANGLE" << endl;
     drawRandomTriangle();
-    cout << "MOUSE CLICKED" << endl;
   }
 }
