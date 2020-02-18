@@ -1,6 +1,7 @@
 #include <ModelTriangle.h>
 #include <CanvasTriangle.h>
 #include <DrawingWindow.h>
+#include <Texture.h>
 #include <Utils.h>
 #include <glm/glm.hpp>
 #include <fstream>
@@ -27,15 +28,13 @@ void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle, bool textured);
 uint32_t* loadPPM(string imageName, int* the_width, int* the_height);
-//TODO: MAKE AN IMAGE CLASS FOR THIS DATA! ps andy smells
-uint32_t* the_image;
-int the_image_width, the_image_height;
 
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to);
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
+Texture the_image("texture.ppm");
 
 float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
@@ -103,7 +102,7 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
 }
 
 uint32_t get_textured_pixel(TexturePoint texturePoint) {
-  return the_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image_width))];
+  return the_image.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image.width))];
 }
 
 void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
@@ -232,9 +231,9 @@ void drawTextureMappedTriangle() {
   p3.texturePoint = TexturePoint(65, 330);
 
   CanvasTriangle triangle(p1, p2, p3);
-  std::cout << "p1.tp.x: " << p1.texturePoint.x << " p1.tp.y: " << p1.texturePoint.y << '\n';
-  std::cout << "p2.tp.x: " << p2.texturePoint.x << " p2.tp.y: " << p2.texturePoint.y << '\n';
-  std::cout << "p3.tp.x: " << p3.texturePoint.x << " p3.tp.y: " << p3.texturePoint.y << '\n';
+  //std::cout << "p1.tp.x: " << p1.texturePoint.x << " p1.tp.y: " << p1.texturePoint.y << '\n';
+  //std::cout << "p2.tp.x: " << p2.texturePoint.x << " p2.tp.y: " << p2.texturePoint.y << '\n';
+  //std::cout << "p3.tp.x: " << p3.texturePoint.x << " p3.tp.y: " << p3.texturePoint.y << '\n';
 
   drawFilledTriangle(triangle, true);
 }
@@ -244,48 +243,6 @@ void drawRandomTriangle(bool filled) {
   generateTriangle(&triangle);
   if (filled) drawFilledTriangle(triangle, false);
   else drawStrokedTriangle(triangle);
-}
-
-uint32_t* loadPPM(string imageName, int* the_width, int* the_height) {
-  FILE* f = fopen(imageName.c_str(), "r");
-  char buf[64];
-  int width, height, maxcolour;
-
-  if (f == NULL) {
-    std::cout << "Could not open file." << '\n';
-    exit(1);
-  }
-
-    fgets(buf, 64, f); // P6
-    fgets(buf, 64, f); // could be GIMP comment
-    if (buf[0] == '#') {
-      fgets(buf, 64, f); // definitely the dimensions
-    }
-    sscanf(buf, "%d %d", &width, &height);
-    fgets(buf, 64, f); // bit depth, should be 255
-    sscanf(buf, "%d", &maxcolour);
-    if (maxcolour != 255) {
-      std::cout << "Unsupported bit depth. Use 255 plz." << '\n';
-      exit(1);
-    }
-    uint8_t linebuf[3 * width];
-
-    uint32_t* ppm_image = (uint32_t*)malloc(width*height*sizeof(uint32_t));
-
-    int y = 0;
-    while(!feof(f)) {
-      fread(&linebuf, 1, 3*width, f);
-      for (int i = 0; i < width; i++) {
-        uint32_t colour = (linebuf[3*i] << 16) + (linebuf[3*i + 1] << 8) + linebuf[3*i + 2];
-        ppm_image[y*width + i] = colour;
-        //window.setPixelColour(i, y, colour);
-      }
-      y++;
-    }
-    fclose(f);
-    *the_width = width;
-    *the_height = height;
-    return ppm_image;
 }
 
 bool isemptyline(char* line) {
@@ -430,8 +387,9 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
   draw();
 
-  the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
+  //the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
   //unordered_map<string, Colour> materials = loadMTL("cornell-box.mtl");
+
   loadOBJ("cornell-box.obj");
 
   while(true)
