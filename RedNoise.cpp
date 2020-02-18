@@ -27,6 +27,7 @@ void drawStrokedTriangle(CanvasTriangle triangle);
 void sortTrianglePoints(CanvasTriangle *triangle);
 void drawFilledTriangle(CanvasTriangle triangle, bool textured);
 uint32_t* loadPPM(string imageName, int* the_width, int* the_height);
+//TODO: MAKE AN IMAGE CLASS FOR THIS DATA! ps andy smells
 uint32_t* the_image;
 int the_image_width, the_image_height;
 
@@ -295,15 +296,13 @@ unordered_map<string, Colour> loadMTL(string filename) {
   FILE* f = fopen(filename.c_str(), "r");
   int bufsize = 200;
   char buf[bufsize];
-
+  std::string* tokens;
   unordered_map<string, Colour> materials;
 
   if (f == NULL) {
     std::cout << "Could not open file." << '\n';
     exit(1);
   }
-
-  std::string* tokens;
 
   string matName;
   float rgb[3];
@@ -332,6 +331,48 @@ unordered_map<string, Colour> loadMTL(string filename) {
     }
   }
   return materials;
+}
+
+void loadOBJ(string filename) {
+  FILE* f = fopen(filename.c_str(), "r");
+  int bufsize = 200;
+  char buf[bufsize];
+  std::string* tokens;
+
+  if (f == NULL) {
+    std::cout << "Could not open file." << '\n';
+    exit(1);
+  }
+
+  //pass 1: run loadMTL for each linked .mtl filename
+  //        build a vector of vertices
+  //
+  //pass 2: build a vector of faces
+  //        a face should be an instance of ModelTriangle (?)
+  //
+
+  unordered_map<string, Colour> mtls;
+  std::vector<glm::vec3> vertices;
+
+  while (!feof(f)) {
+    fgets(buf, bufsize, f);
+    if (isemptyline(buf)) continue;
+    tokens = split(buf, ' ');
+
+    if (tokens[0] == "mtllib") {
+      tokens[1].erase(tokens[1].end() - 1, tokens[1].end());
+      mtls = loadMTL(tokens[1]);
+    }
+    else if (tokens[0] == "o") {
+      std::cout << "o" << '\n';
+    }
+    else if (tokens[0] == "usemtl") {
+      std::cout << "usemtl" << '\n';
+    }
+    else if (tokens[0] == "v") {
+      std::cout << "v" << '\n';
+    }
+  }
 }
 
 void clearScreen() {
@@ -390,8 +431,8 @@ int main(int argc, char* argv[]) {
   draw();
 
   the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
-  unordered_map<string, Colour> materials = loadMTL("cornell-box.mtl");
-  std::cout << "size of hashmap: " << materials.size() << '\n';
+  //unordered_map<string, Colour> materials = loadMTL("cornell-box.mtl");
+  loadOBJ("cornell-box.obj");
 
   while(true)
   {
