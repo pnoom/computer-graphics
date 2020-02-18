@@ -19,22 +19,6 @@ using namespace glm;
 
 Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 
-/*
-void draw();
-void update();
-void handleEvent(SDL_Event event);
-
-void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour);
-void drawStrokedTriangle(CanvasTriangle triangle);
-void sortTrianglePoints(CanvasTriangle *triangle);
-void drawFilledTriangle(CanvasTriangle triangle, bool textured);
-uint32_t* loadPPM(string imageName, int* the_width, int* the_height);
-
-std::vector<double> interpolate(double from, double to, int numberOfValues);
-std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
-std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to);
-*/
-
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 Texture the_image("texture.ppm");
 
@@ -306,7 +290,8 @@ void loadOBJ(string filename) {
 
   unordered_map<string, Colour> mtls;
 
-  unordered_map<string, std::vector<glm::vec3>> objects;
+  std::vector<glm::vec3> vertices;
+  unordered_map<string, std::vector<glm::uint>> objects;
   unordered_map<string, string> object_mtl_map;
 
   string object_name, mtl_name;
@@ -324,7 +309,7 @@ void loadOBJ(string filename) {
       object_name = tokens[1];
       object_name.erase(object_name.end() - 1, object_name.end());
       std::cout << "o: " << object_name << '\n';
-      objects[object_name] = std::vector<glm::vec3>();
+      objects[object_name] = std::vector<glm::uint>();
 
       fgets(buf, bufsize, f);
       tokens = split(buf, ' ');
@@ -348,7 +333,8 @@ void loadOBJ(string filename) {
         }
         glm::vec3 v(vec3_parts[0], vec3_parts[1], vec3_parts[2]);
         std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
-        objects[object_name].push_back(v);
+        vertices.push_back(v);
+        objects[object_name].push_back(vertices.size());
 
         fgets(buf, bufsize, f);
         tokens = split(buf, ' ');
@@ -358,8 +344,8 @@ void loadOBJ(string filename) {
   }
   fclose(f);
 
-  //For faces pass; put here for now then refactor later?
-  //FIX: vertex indexing is currently object-specific; should be file-wide indexing!!!!
+  //TODO: vertices and faces can come in any order; this code is too strict on ordering!
+  //      -> move the while(tokens[0] == "v") {...} logic out of following an object or smth
 }
 
 void clearScreen() {
