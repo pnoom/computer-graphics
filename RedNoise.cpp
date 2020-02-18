@@ -19,6 +19,7 @@ using namespace glm;
 
 Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 
+/*
 void draw();
 void update();
 void handleEvent(SDL_Event event);
@@ -32,6 +33,7 @@ uint32_t* loadPPM(string imageName, int* the_width, int* the_height);
 std::vector<double> interpolate(double from, double to, int numberOfValues);
 std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues);
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to);
+*/
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 Texture the_image("texture.ppm");
@@ -287,6 +289,7 @@ unordered_map<string, Colour> loadMTL(string filename) {
       }
     }
   }
+  fclose(f);
   return materials;
 }
 
@@ -301,35 +304,62 @@ void loadOBJ(string filename) {
     exit(1);
   }
 
-  //pass 1: run loadMTL for each linked .mtl filename
-  //        build a vector of vertices
-  //
-  //pass 2: build a vector of faces
-  //        a face should be an instance of ModelTriangle (?)
-  //
-
   unordered_map<string, Colour> mtls;
-  std::vector<glm::vec3> vertices;
 
+  unordered_map<string, std::vector<glm::vec3>> objects;
+  unordered_map<string, string> object_mtl_map;
+
+  string object_name, mtl_name;
   while (!feof(f)) {
     fgets(buf, bufsize, f);
     if (isemptyline(buf)) continue;
     tokens = split(buf, ' ');
 
     if (tokens[0] == "mtllib") {
-      tokens[1].erase(tokens[1].end() - 1, tokens[1].end());
-      mtls = loadMTL(tokens[1]);
+      string mtllib_name = tokens[1];
+      mtllib_name.erase(mtllib_name.end() - 1, mtllib_name.end());
+      mtls = loadMTL(mtllib_name);
     }
     else if (tokens[0] == "o") {
-      std::cout << "o" << '\n';
-    }
-    else if (tokens[0] == "usemtl") {
-      std::cout << "usemtl" << '\n';
-    }
-    else if (tokens[0] == "v") {
-      std::cout << "v" << '\n';
+      object_name = tokens[1];
+      object_name.erase(object_name.end() - 1, object_name.end());
+      std::cout << "o: " << object_name << '\n';
+      objects[object_name] = std::vector<glm::vec3>();
+
+      fgets(buf, bufsize, f);
+      tokens = split(buf, ' ');
+
+      if (tokens[0] != "usemtl") {
+        std::cout << "Object " << object_name << " has no associated material." << '\n';
+        exit(1);
+      }
+
+      mtl_name = tokens[1];
+      mtl_name.erase(mtl_name.end() - 1, mtl_name.end());
+      object_mtl_map[object_name] = mtl_name;
+
+      fgets(buf, bufsize, f);
+      tokens = split(buf, ' ');
+      while(tokens[0] == "v") {
+        float vec3_parts[3];
+        size_t stof_thing;
+        for (int i = 0; i < 3; i++) {
+          vec3_parts[i] = stof(tokens[i+1], &stof_thing);
+        }
+        glm::vec3 v(vec3_parts[0], vec3_parts[1], vec3_parts[2]);
+        std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
+        objects[object_name].push_back(v);
+
+        fgets(buf, bufsize, f);
+        tokens = split(buf, ' ');
+      }
+      std::cout << "Object " << object_name << " has " << objects[object_name].size() << " vertices, with material " << object_mtl_map[object_name] << "\n";
     }
   }
+  fclose(f);
+
+  //For faces pass; put here for now then refactor later?
+  //FIX: vertex indexing is currently object-specific; should be file-wide indexing!!!!
 }
 
 void clearScreen() {
@@ -387,14 +417,10 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
   draw();
 
-  //the_image = loadPPM("texture.ppm", &the_image_width, &the_image_height);
-  //unordered_map<string, Colour> materials = loadMTL("cornell-box.mtl");
-
   loadOBJ("cornell-box.obj");
 
   while(true)
   {
-
     // We MUST poll for events - otherwise the window will freeze !
     if(window.pollForInputEvents(&event)) handleEvent(event);
 
