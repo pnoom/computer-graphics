@@ -8,7 +8,7 @@ class GObject {
     std::string name;
     Colour colour;
     std::vector<ModelTriangle> faces;
-    
+
     GObject () {}
 
     GObject (std::string n, Colour c, std::vector<ModelTriangle> fs) {
@@ -16,5 +16,5 @@ class GObject {
       colour = c;
       faces = fs;
     }
-  
+
 };
