@@ -278,6 +278,47 @@ unordered_map<string, Colour> loadMTL(string filename) {
   return materials;
 }
 
+/*
+std::vector<ModelTriangle> loadOBJpass2(unordered_map<string, Colour> mtls,
+					 std::vector<glm::vec3> vertices,
+					 unordered_map<string, std::vector<glm::uint>> objects,
+					 unordered_map<string, string> object_mtl_map) {
+  FILE* f = fopen(filename.c_str(), "r");
+  int bufsize = 200;
+  char buf[bufsize];
+  std::string* tokens;
+  std::vector<ModelTriangle> res;
+  Colour colour;
+
+  if (f == NULL) {
+    std::cout << "Could not open file." << '\n';
+    exit(1);
+  }
+
+  while (!feof(f)) {
+    fgets(buf, bufsize, f);
+    if (isemptyline(buf)) continue;
+    tokens = split(buf, ' ');
+
+    if (tokens[0] == "o") {
+      object_name = tokens[1];
+      object_name.erase(object_name.end() - 1, object_name.end());
+
+      colour = mtls[object_mtl_map[object_name]];
+      
+    }
+    else if (tokens[0] == "f") {
+      uint vindices[3];
+      for (int i=1; i<=3; i++) {
+	sscanf(tokens[i], "%d/", &vindices[i-1]);
+      }
+      res.push_back(ModelTriangle(vertices.at(vindices[0]),
+				  vertices.at(vindices[1]),
+				  vertices.at(vindices[2]), colour));
+    }
+}
+*/
+
 void loadOBJ(string filename) {
   FILE* f = fopen(filename.c_str(), "r");
   int bufsize = 200;
