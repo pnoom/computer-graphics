@@ -11,6 +11,7 @@
 #include <string>
 
 #include "Texture.h"
+#include "GObject.h"
 
 using namespace std;
 using namespace glm;
@@ -278,8 +279,8 @@ unordered_map<string, Colour> loadMTL(string filename) {
   return materials;
 }
 
-/*
-std::vector<ModelTriangle> loadOBJpass2(unordered_map<string, Colour> mtls,
+std::vector<GObject> loadOBJpass2(string filename,
+				  unordered_map<string, Colour> mtls,
 					 std::vector<glm::vec3> vertices,
 					 unordered_map<string, std::vector<glm::uint>> objects,
 					 unordered_map<string, string> object_mtl_map) {
@@ -287,39 +288,54 @@ std::vector<ModelTriangle> loadOBJpass2(unordered_map<string, Colour> mtls,
   int bufsize = 200;
   char buf[bufsize];
   std::string* tokens;
-  std::vector<ModelTriangle> res;
+  std::vector<ModelTriangle> faces;
+  std::vector<GObject> result;
   Colour colour;
+  std::string object_name;
 
   if (f == NULL) {
     std::cout << "Could not open file." << '\n';
     exit(1);
   }
 
+  //std::cout << "Starting 2nd pass" << '\n';
+
   while (!feof(f)) {
     fgets(buf, bufsize, f);
     if (isemptyline(buf)) continue;
     tokens = split(buf, ' ');
-
+    
     if (tokens[0] == "o") {
       object_name = tokens[1];
       object_name.erase(object_name.end() - 1, object_name.end());
 
       colour = mtls[object_mtl_map[object_name]];
       
-    }
-    else if (tokens[0] == "f") {
-      uint vindices[3];
-      for (int i=1; i<=3; i++) {
-	sscanf(tokens[i], "%d/", &vindices[i-1]);
+      while(!feof(f) && !isemptyline(buf)) {
+	if (tokens[0] == "f") {
+	  uint vindices[3];
+	  for (int i=1; i<=3; i++) {
+	    sscanf(tokens[i].c_str(), "%d/", &vindices[i-1]);
+	  }
+	  faces.push_back(ModelTriangle(vertices.at(vindices[0]-1),
+					vertices.at(vindices[1]-1),
+					vertices.at(vindices[2]-1), colour));
+	}
+	fgets(buf, bufsize, f);
+        tokens = split(buf, ' ');
       }
-      res.push_back(ModelTriangle(vertices.at(vindices[0]),
-				  vertices.at(vindices[1]),
-				  vertices.at(vindices[2]), colour));
+      result.push_back(GObject(object_name, colour, faces));
+      //std::cout << "faces.size() " << faces.size() << '\n';
+      faces.clear();
+      
     }
+  }
+  fclose(f);
+  //std::cout << "result.size() " << result.size() << '\n';
+  return result;
 }
-*/
 
-void loadOBJ(string filename) {
+std::vector<GObject> loadOBJ(string filename) {
   FILE* f = fopen(filename.c_str(), "r");
   int bufsize = 200;
   char buf[bufsize];
@@ -357,7 +373,7 @@ void loadOBJ(string filename) {
       tokens = split(buf, ' ');
 
       if (tokens[0] != "usemtl") {
-        std::cout << "Object " << object_name << " has no associated material." << '\n';
+        //std::cout << "Object " << object_name << " has no associated material." << '\n';
         exit(1);
       }
 
@@ -383,13 +399,16 @@ void loadOBJ(string filename) {
 	  fgets(buf, bufsize, f);
 	  tokens = split(buf, ' ');      
       }
-      std::cout << "Object " << object_name << " has " << objects[object_name].size() << " vertices, with material " << object_mtl_map[object_name] << "\n";
+      //std::cout << "Object " << object_name << " has " << objects[object_name].size() << " vertices, with material " << object_mtl_map[object_name] << "\n";
     }
   }
   fclose(f);
 
+  //std::cout << "First pass complete" << "\n";
+
   //TODO: vertices and faces can come in any order; this code is too strict on ordering!
   //      -> move the while(tokens[0] == "v") {...} logic out of following an object or smth
+  return loadOBJpass2(filename, mtls, vertices, objects, object_mtl_map);
 }
 
 void clearScreen() {
