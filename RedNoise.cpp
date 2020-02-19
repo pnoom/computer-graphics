@@ -1,7 +1,6 @@
 #include <ModelTriangle.h>
 #include <CanvasTriangle.h>
 #include <DrawingWindow.h>
-#include <Texture.h>
 #include <Utils.h>
 #include <glm/glm.hpp>
 #include <fstream>
@@ -10,6 +9,8 @@
 #include <algorithm>
 #include <unordered_map>
 #include <string>
+
+#include "Texture.h"
 
 using namespace std;
 using namespace glm;
@@ -325,19 +326,21 @@ void loadOBJ(string filename) {
 
       fgets(buf, bufsize, f);
       tokens = split(buf, ' ');
-      while(tokens[0] == "v") {
-        float vec3_parts[3];
-        size_t stof_thing;
-        for (int i = 0; i < 3; i++) {
-          vec3_parts[i] = stof(tokens[i+1], &stof_thing);
-        }
-        glm::vec3 v(vec3_parts[0], vec3_parts[1], vec3_parts[2]);
-        std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
-        vertices.push_back(v);
-        objects[object_name].push_back(vertices.size());
 
-        fgets(buf, bufsize, f);
-        tokens = split(buf, ' ');
+      while(!feof(f) && !isemptyline(buf)) {
+	if (tokens[0] == "v") {
+	  float vec3_parts[3];
+	  size_t stof_thing;
+	  for (int i = 0; i < 3; i++) {
+	    vec3_parts[i] = stof(tokens[i+1], &stof_thing);
+	  }
+	  glm::vec3 v(vec3_parts[0], vec3_parts[1], vec3_parts[2]);
+	  std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
+	  vertices.push_back(v);
+	  objects[object_name].push_back(vertices.size());
+	}
+	  fgets(buf, bufsize, f);
+	  tokens = split(buf, ' ');      
       }
       std::cout << "Object " << object_name << " has " << objects[object_name].size() << " vertices, with material " << object_mtl_map[object_name] << "\n";
     }
