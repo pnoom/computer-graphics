@@ -11,7 +11,15 @@ class OBJ_IO {
     OBJ_IO () {}
 
     std::vector<GObject> loadOBJ(string filename) {
-      return loadOBJpass1(filename);
+      std::vector<GObject> res = loadOBJpass1(filename);
+      /*
+      for (uint i = 0; i < res.size(); i++) {
+        for (uint j = 0; j < res.at(i).faces.size(); j++) {
+          std::cout << res.at(i).faces.at(j) << '\n';
+        }
+      }
+      */
+      return res;
     }
 
   private:
@@ -148,7 +156,7 @@ class OBJ_IO {
         else if (tokens[0] == "o") {
           object_name = tokens[1];
           object_name.erase(object_name.end() - 1, object_name.end());
-          std::cout << "o: " << object_name << '\n';
+          //std::cout << "o: " << object_name << '\n';
           objects[object_name] = std::vector<glm::uint>();
 
           fgets(buf, bufsize, f);
@@ -174,7 +182,7 @@ class OBJ_IO {
     	    vec3_parts[i] = stof(tokens[i+1], &stof_thing);
     	  }
     	  glm::vec3 v(vec3_parts[0], vec3_parts[1], vec3_parts[2]);
-    	  std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
+    	  //std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
     	  vertices.push_back(v);
     	  objects[object_name].push_back(vertices.size());
     	}
