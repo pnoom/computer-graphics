@@ -57,3 +57,6 @@ window:
 clean:
 	rm $(OBJECT_FILE)
 	rm $(EXECUTABLE)
+
+launch-emacs:
+	emacs -nw *.mtl *.obj *.h *.cpp
