@@ -13,6 +13,7 @@
 #include "Texture.h"
 #include "GObject.h"
 #include "OBJ_IO.h"
+#include "Camera.h"
 
 using namespace std;
 using namespace glm;
@@ -24,7 +25,7 @@ Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 Texture the_image("texture.ppm");
-
+Camera camera;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj");
 
@@ -32,11 +33,14 @@ float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
+/*
 // Tweak cz as necessary. May need to be -ve
 glm::vec3 getCameraPos() {
   double cx = (double)WIDTH / 2.0;
   double cy = (double)HEIGHT / 2.0;
-  double cz = 200.0;
+  cx = 0.0F;
+  cy = 0.0F;
+  double cz = -5.0;
   return glm::vec3(cx,cy,cz);
 }
 
@@ -50,6 +54,7 @@ double getImagePlaneZ() {
 double getFocalLength() {
   return getCameraPos().z - getImagePlaneZ();
 }
+*/
 
 std::vector<double> interpolate(double from, double to, int numberOfValues) {
   double delta = (to - from) / (numberOfValues - 1);
@@ -256,19 +261,50 @@ void drawRandomTriangle(bool filled) {
   else drawStrokedTriangle(triangle);
 }
 
+CanvasPoint projectVertexInto2D(glm::vec3 v) {
+  glm::vec3 cam_pos = camera.position;
+
+  float h_v = v[0] - cam_pos[0];  //  height of 3-D vertex from camera axis
+  float w_v = v[1] - cam_pos[1];  //   width of 3-D vertex from camera axis
+  float d_v = v[2] - cam_pos[2];  // distance from camera to axis extension of point
+
+  float h_i;                      // height of canvaspoint from camera axis
+  float w_i;                      //  width of canvaspoint from camera axis
+  float d_i = camera.focalLength; // distance from camera to axis extension of canvas
+
+  float depth = sqrt((d_v * d_v) + (h_v * h_v) + (w_v * w_v));
+
+  h_i = (h_v * d_i) / d_v;
+  w_i = (w_v * d_i) / d_v;
+
+  //scale points
+  h_i = (HEIGHT / 2) + (h_i * 5);
+  w_i =  (WIDTH / 2) + (w_i * 5);
+
+  CanvasPoint res(h_i, w_i, depth);
+  return res;
+}
+
 CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
   CanvasTriangle result;
-  // Insert "similar triangles" logic here
-  
+  //generateTriangle(&result);
+  for (int i = 0; i < 3; i++) {
+    result.vertices[i] = projectVertexInto2D(triangle.vertices[i]);
+    //std::cout << "vertex at " << i << ": " << result.vertices[i] << '\n';
+  }
+  result.colour = triangle.colour;
+
   return result;
 }
 
 // For now, just draw wireframe triangles
 void drawGeometry(std::vector<GObject> gobjs) {
+  //std::cout << "drawing geometry" << '\n';
   for (uint i = 0; i < gobjs.size(); i++) {
-    drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(0)));
-    drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(1)));
-    drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(2)));
+    for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
+      //std::cout << "drawing face" << '\n';
+      drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)));
+    }
   }
 }
 
@@ -330,7 +366,7 @@ int main(int argc, char* argv[]) {
   srand((unsigned) time(0));
   SDL_Event event;
   draw();
-
+  //camera.printCamera();
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
