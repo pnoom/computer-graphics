@@ -256,6 +256,22 @@ void drawRandomTriangle(bool filled) {
   else drawStrokedTriangle(triangle);
 }
 
+CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
+  CanvasTriangle result;
+  // Insert "similar triangles" logic here
+  
+  return result;
+}
+
+// For now, just draw wireframe triangles
+void drawGeometry(std::vector<GObject> gobjs) {
+  for (uint i = 0; i < gobjs.size(); i++) {
+    drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(0)));
+    drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(1)));
+    drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(2)));
+  }
+}
+
 void clearScreen() {
   //Draws a white empty screen
   window.clearPixels();
@@ -300,6 +316,10 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_c) {
       cout << "C: CLEARING SCREEN" << endl;
       clearScreen();
+    }
+    else if(event.key.keysym.sym == SDLK_b) {
+      cout << "B: DRAW CORNELL BOX" << endl;
+      drawGeometry(gobjects);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
