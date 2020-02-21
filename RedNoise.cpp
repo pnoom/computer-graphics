@@ -32,6 +32,25 @@ float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
+// Tweak cz as necessary. May need to be -ve
+glm::vec3 getCameraPos() {
+  double cx = (double)WIDTH / 2.0;
+  double cy = (double)HEIGHT / 2.0;
+  double cz = 200.0;
+  return glm::vec3(cx,cy,cz);
+}
+
+// Place image plane halfway between camera and the world's origin for now.
+double getImagePlaneZ() {
+  double cz = getCameraPos().z;
+  return cz / 2.0;
+}
+
+// Distance from camera to image plane
+double getFocalLength() {
+  return getCameraPos().z - getImagePlaneZ();
+}
+
 std::vector<double> interpolate(double from, double to, int numberOfValues) {
   double delta = (to - from) / (numberOfValues - 1);
   std::vector<double> v;
