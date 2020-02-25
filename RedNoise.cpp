@@ -153,9 +153,9 @@ void generateTriangle(CanvasTriangle *triangle) {
 }
 
 void drawStrokedTriangle(CanvasTriangle triangle) {
-  drawLine(triangle.vertices[0], triangle.vertices[1], Colour(0,0,0));
-  drawLine(triangle.vertices[0], triangle.vertices[2], Colour(0,0,0));
-  drawLine(triangle.vertices[1], triangle.vertices[2], Colour(0,0,0));
+  drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
+  drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
+  drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
 }
 
 bool comparator(CanvasPoint p1, CanvasPoint p2) {
@@ -278,8 +278,8 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   h_i = (h_v * d_i) / d_v;
 
   //scale points
-  w_i = w_i * 40 + (WIDTH / 2);
-  h_i = h_i * 40 + (HEIGHT / 2);
+  w_i = w_i * -80 + (WIDTH / 2);
+  h_i = h_i * 80 + (HEIGHT / 2);
 
   CanvasPoint res(w_i, h_i, depth);
   return res;

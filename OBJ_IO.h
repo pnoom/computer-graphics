@@ -49,6 +49,7 @@ class OBJ_IO {
         //std::cout << "tokens[0]" << tokens[0] << '\n';
         if (tokens[0] == "newmtl") {
           matName = tokens[1];
+	  matName.erase(matName.end() - 1, matName.end());
           fgets(buf, bufsize, f);
           tokens = split(buf, ' ');
           if (tokens[0] != "Kd") {
@@ -61,7 +62,9 @@ class OBJ_IO {
               rgb[i] = stof(tokens[i+1], &stof_thing);
             }
             Colour col(matName, 255*round(rgb[0]), 255*round(rgb[1]), 255*round(rgb[2]));
-            materials[matName] = col;
+            //materials[matName] = col;
+	    materials.insert({matName, col});
+	    //std::cout << "matName: '" << matName << "'\n";
           }
         }
       }
@@ -169,7 +172,10 @@ class OBJ_IO {
 
           mtl_name = tokens[1];
           mtl_name.erase(mtl_name.end() - 1, mtl_name.end());
-          object_mtl_map[object_name] = mtl_name;
+	  // std::cout << "mtl_name: '" << mtl_name << "'\n";
+	  
+          object_mtl_map.insert({object_name, mtl_name});
+	  //std::cout << "colour: " << mtls[mtl_name] << '\n';
 
           fgets(buf, bufsize, f);
           tokens = split(buf, ' ');
