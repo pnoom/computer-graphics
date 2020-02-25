@@ -2,14 +2,14 @@
 
 class DepthBuffer {
   public:
-    float* depthbuf;
+    double* depthbuf;
     int width, height;
 
     DepthBuffer(int w, int h){
       width = w;
       height = h;
 
-      depthbuf = (float*)malloc(width*height*sizeof(float));
+      depthbuf = (double*)malloc(width*height*sizeof(double));
       std::cout << "depth buffer allocated, size " << width << " by " << height << '\n';
       instantiateDepthBuf();
     }
@@ -18,7 +18,7 @@ class DepthBuffer {
       int px = round(pixel.x);
       int py = round(pixel.y);
       if (!((py >= 0) && (py < height) && (px >= 0) && (px < width))) return false;
-      float invz = 1.0f / (float)pixel.depth;
+      double invz = 1.0 / pixel.depth;
       if (invz < depthbuf[py*width + px]) {
         depthbuf[py*width + px] = invz;
         return true;
@@ -30,7 +30,7 @@ class DepthBuffer {
     void instantiateDepthBuf() {
       for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-          depthbuf[(j * width) + i] = std::numeric_limits<float>::infinity();
+          depthbuf[(j * width) + i] = std::numeric_limits<double>::infinity();
         }
       }
     }

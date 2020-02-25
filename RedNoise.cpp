@@ -68,7 +68,7 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   float delta_Y  = to.y - from.y;
   float delta_tp_X = to.texturePoint.x - from.texturePoint.x;
   float delta_tp_Y = to.texturePoint.y - from.texturePoint.y;
-  float delta_dep = to.depth - from.depth;
+  double delta_dep = to.depth - from.depth;
 
   float no_steps = max(abs(delta_X), abs(delta_Y));
   //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
@@ -76,11 +76,11 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   float stepSize_Y = delta_Y / no_steps;
   float stepSize_tp_X = delta_tp_X / no_steps;
   float stepSize_tp_Y = delta_tp_Y / no_steps;
-  float stepDep = delta_dep / no_steps;
+  double stepDep = delta_dep / no_steps;
 
   std::vector<CanvasPoint> v;
   for (float i = 0.0; i < no_steps; i++) {
-    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + (i * stepDep));
+    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + ((double)i * stepDep));
     TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y));
     interp_point.texturePoint = interp_tp;
     v.push_back(interp_point);
@@ -95,9 +95,10 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    if (depthbuf.update(pixel)) {
-      window.setPixelColour(round(x), round(y), get_rgb(colour));
-    }
+    //if (depthbuf.update(pixel)) {
+    //  window.setPixelColour(round(x), round(y), get_rgb(colour));
+    //}
+    window.setPixelColour(round(x), round(y), get_rgb(colour));
   }
 }
 
@@ -283,16 +284,16 @@ void drawRandomTriangle(bool filled) {
 CanvasPoint projectVertexInto2D(glm::vec3 v) {
   glm::vec3 cam_pos = camera.position;
 
-  float w_v = v[0] - cam_pos[0];  // width of 3-D vertex from camera axis
-  float h_v = v[1] - cam_pos[1];  // height of 3-D vertex from camera axis
-  float d_v = v[2] - cam_pos[2];  // distance from camera to axis extension of point
+  double w_v = v[0] - cam_pos[0];  // width of 3-D vertex from camera axis
+  double h_v = v[1] - cam_pos[1];  // height of 3-D vertex from camera axis
+  double d_v = v[2] - cam_pos[2];  // distance from camera to axis extension of point
 
-  float w_i;                      //  width of canvaspoint from camera axis
-  float h_i;                      // height of canvaspoint from camera axis
-  float d_i = camera.focalLength; // distance from camera to axis extension of canvas
+  double w_i;                      //  width of canvaspoint from camera axis
+  double h_i;                      // height of canvaspoint from camera axis
+  double d_i = camera.focalLength; // distance from camera to axis extension of canvas
 
-  float depth = sqrt((d_v * d_v) + (w_v * w_v) + (h_v * h_v));
-  std::cout << "depth: " << depth << '\n';
+  double depth = sqrt((d_v * d_v) + (w_v * w_v) + (h_v * h_v));
+  // std::cout << "depth: " << depth << '\n';
 
   w_i = (w_v * d_i) / d_v;
   h_i = (h_v * d_i) / d_v;
@@ -301,7 +302,7 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   w_i = w_i * -40 + (WIDTH / 2);
   h_i = h_i * 40 + (HEIGHT / 2);
 
-  CanvasPoint res(w_i, h_i, depth);
+  CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
 }
 
@@ -324,7 +325,7 @@ void drawGeometry(std::vector<GObject> gobjs) {
     for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
       //std::cout << "drawing face" << '\n';
       //std::cout << "i: " << i << " , j: " << j << '\n';
-      std::cout << "object: " << gobjs.at(i).name << '\n';
+      //std::cout << "object: " << gobjs.at(i).name << '\n';
       CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
       drawFilledTriangle(projectedTriangle, false);
       //drawStrokedTriangle(projectedTriangle);
