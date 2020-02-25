@@ -6,9 +6,9 @@ using namespace std;
 
 class Camera {
   public:
-    vec3 position = vec3(0.0, 0.0, -5.0);
+    vec3 position = vec3(0.0, 0.0, -10.0);
     mat3 orientation = mat3(1.0F);
-    float focalLength = -2.5;
+    float focalLength = position[2] / 2;
     
     Camera () {}
 

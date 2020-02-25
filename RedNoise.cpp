@@ -264,24 +264,24 @@ void drawRandomTriangle(bool filled) {
 CanvasPoint projectVertexInto2D(glm::vec3 v) {
   glm::vec3 cam_pos = camera.position;
 
-  float h_v = v[0] - cam_pos[0];  //  height of 3-D vertex from camera axis
-  float w_v = v[1] - cam_pos[1];  //   width of 3-D vertex from camera axis
+  float w_v = v[0] - cam_pos[0];  // width of 3-D vertex from camera axis 
+  float h_v = v[1] - cam_pos[1];  // height of 3-D vertex from camera axis
   float d_v = v[2] - cam_pos[2];  // distance from camera to axis extension of point
 
-  float h_i;                      // height of canvaspoint from camera axis
   float w_i;                      //  width of canvaspoint from camera axis
+  float h_i;                      // height of canvaspoint from camera axis
   float d_i = camera.focalLength; // distance from camera to axis extension of canvas
 
-  float depth = sqrt((d_v * d_v) + (h_v * h_v) + (w_v * w_v));
+  float depth = sqrt((d_v * d_v) + (w_v * w_v) + (h_v * h_v));
 
-  h_i = (h_v * d_i) / d_v;
   w_i = (w_v * d_i) / d_v;
+  h_i = (h_v * d_i) / d_v;
 
   //scale points
-  h_i = (HEIGHT / 2) + (h_i * 5);
-  w_i =  (WIDTH / 2) + (w_i * 5);
-
-  CanvasPoint res(h_i, w_i, depth);
+  w_i = w_i*50 + (WIDTH / 2);
+  h_i = h_i*50 + (HEIGHT / 2);
+  
+  CanvasPoint res(w_i, h_i, depth);
   return res;
 }
 
