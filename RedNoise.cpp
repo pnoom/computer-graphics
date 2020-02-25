@@ -229,13 +229,25 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   }
 }
 
+bool triangleIsLine(CanvasTriangle triangle) {
+  return false;
+}
+
 void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   sortTrianglePoints(&triangle);
   CanvasTriangle triangles[2];
-  getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
 
-  fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
-  fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
+  if (triangleIsLine(triangle)) {
+    // just draw "a line"
+    //drawLine();
+    //drawLine();
+    // drawLine();
+  }
+  else {
+    getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);  
+    fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
+    fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
+  }
 }
 
 void drawTextureMappedTriangle() {
@@ -303,7 +315,9 @@ void drawGeometry(std::vector<GObject> gobjs) {
   for (uint i = 0; i < gobjs.size(); i++) {
     for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
       //std::cout << "drawing face" << '\n';
-      drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)));
+      //drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)));
+      std::cout << "drawing filled triangle: " << projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)) << '\n';
+      drawFilledTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)), false);
     }
   }
 }
