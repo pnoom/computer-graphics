@@ -33,29 +33,6 @@ float max(float A, float B) { if (A > B) return A; return B; }
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
-/*
-// Tweak cz as necessary. May need to be -ve
-glm::vec3 getCameraPos() {
-  double cx = (double)WIDTH / 2.0;
-  double cy = (double)HEIGHT / 2.0;
-  cx = 0.0F;
-  cy = 0.0F;
-  double cz = -5.0;
-  return glm::vec3(cx,cy,cz);
-}
-
-// Place image plane halfway between camera and the world's origin for now.
-double getImagePlaneZ() {
-  double cz = getCameraPos().z;
-  return cz / 2.0;
-}
-
-// Distance from camera to image plane
-double getFocalLength() {
-  return getCameraPos().z - getImagePlaneZ();
-}
-*/
-
 std::vector<double> interpolate(double from, double to, int numberOfValues) {
   double delta = (to - from) / (numberOfValues - 1);
   std::vector<double> v;
@@ -177,13 +154,13 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
 }
 
 void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasTriangle *bottom) {
-  if ((triangle.vertices[0].y == triangle.vertices[1].y) || (triangle.vertices[1].y == triangle.vertices[2].y)) {
+  if ((round(triangle.vertices[0].y) == round(triangle.vertices[1].y)) || (round(triangle.vertices[1].y) == round(triangle.vertices[2].y))) {
+    //std::cout << "detected a flat triangle!" << '\n';
     CanvasPoint temp = triangle.vertices[1];
     triangle.vertices[1] = triangle.vertices[2];
     triangle.vertices[2] = temp;
     equateTriangles(triangle, top);
     equateTriangles(triangle, bottom);
-    //std::cout << "detected a flat triangle!" << '\n';
     return;
   }
 
@@ -204,7 +181,7 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
 }
 
 void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B, bool textured) {
-
+  //std::cout << "drawing filled triangle: " << triangle << '\n';
   std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[side1_A], triangle.vertices[side1_B]);
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[side2_A], triangle.vertices[side2_B]);
 
@@ -230,6 +207,27 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
 }
 
 bool triangleIsLine(CanvasTriangle triangle) {
+  std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
+  for (uint i = 0; i < v.size(); i++) {
+    if ((round(v.at(i).x) == round(triangle.vertices[2].x)) && (round(v.at(i).y) == round(triangle.vertices[2].y))) {
+      return true;
+    }
+  }
+
+  v = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
+  for (uint i = 0; i < v.size(); i++) {
+    if ((round(v.at(i).x) == round(triangle.vertices[1].x)) && (round(v.at(i).y) == round(triangle.vertices[1].y))) {
+      return true;
+    }
+  }
+
+  v = interpolate_line(triangle.vertices[1], triangle.vertices[2]);
+  for (uint i = 0; i < v.size(); i++) {
+    if ((round(v.at(i).x) == round(triangle.vertices[0].x)) && (round(v.at(i).y) == round(triangle.vertices[0].y))) {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -238,15 +236,17 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   CanvasTriangle triangles[2];
 
   if (triangleIsLine(triangle)) {
-    // just draw "a line"
-    //drawLine();
-    //drawLine();
-    // drawLine();
+    drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
+    drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
+    drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
   }
   else {
-    getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);  
+    getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
+    //std::cout << "TOP" << '\n';
     fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
+    //std::cout << "BOTTOM" << '\n';
     fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
+    //std::cout << "DRAWN TRIANGLE!" << "\n";
   }
 }
 
@@ -315,9 +315,11 @@ void drawGeometry(std::vector<GObject> gobjs) {
   for (uint i = 0; i < gobjs.size(); i++) {
     for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
       //std::cout << "drawing face" << '\n';
-      //drawStrokedTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)));
-      std::cout << "drawing filled triangle: " << projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)) << '\n';
-      drawFilledTriangle(projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j)), false);
+      //std::cout << "i: " << i << " , j: " << j << '\n';
+      CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
+      drawFilledTriangle(projectedTriangle, false);
+      //drawStrokedTriangle(projectedTriangle);
+
     }
   }
 }
@@ -381,6 +383,14 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
   draw();
   camera.printCamera();
+
+  //CanvasTriangle test(CanvasPoint(255, 266), CanvasPoint(305, 266), CanvasPoint(305, 317), COLOURS[2]);
+  //CanvasTriangle test = projectTriangleOntoImagePlane(gobjects.at(6).faces.at(9));
+  //CanvasTriangle test(CanvasPoint(100, 100), CanvasPoint(200, 200), CanvasPoint(300, 300), COLOURS[2]);
+  //if (triangleIsLine(test)) std::cout << "LINE!" << '\n';
+  //drawStrokedTriangle(test);
+  //drawFilledTriangle(test, false);
+
   while(true)
   {
     // We MUST poll for events - otherwise the window will freeze !
