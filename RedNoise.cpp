@@ -14,6 +14,7 @@
 #include "GObject.h"
 #include "OBJ_IO.h"
 #include "Camera.h"
+#include "DepthBuffer.h"
 
 using namespace std;
 using namespace glm;
@@ -25,6 +26,8 @@ Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 Texture the_image("texture.ppm");
+DepthBuffer depthbuf(WIDTH, HEIGHT);
+
 Camera camera;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj");
@@ -389,7 +392,7 @@ int main(int argc, char* argv[]) {
   //CanvasTriangle test(CanvasPoint(100, 100), CanvasPoint(200, 200), CanvasPoint(300, 300), COLOURS[2]);
   //if (triangleIsLine(test)) std::cout << "LINE!" << '\n';
   //drawStrokedTriangle(test);
-  //drawFilledTriangle(test, false);
+  //drawFilledTriangle(test, true);
 
   while(true)
   {
