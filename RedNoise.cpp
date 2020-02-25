@@ -68,6 +68,7 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   float delta_Y  = to.y - from.y;
   float delta_tp_X = to.texturePoint.x - from.texturePoint.x;
   float delta_tp_Y = to.texturePoint.y - from.texturePoint.y;
+  float delta_dep = to.depth - from.depth;
 
   float no_steps = max(abs(delta_X), abs(delta_Y));
   //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
@@ -75,10 +76,11 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   float stepSize_Y = delta_Y / no_steps;
   float stepSize_tp_X = delta_tp_X / no_steps;
   float stepSize_tp_Y = delta_tp_Y / no_steps;
+  float stepDep = delta_dep / no_steps;
 
   std::vector<CanvasPoint> v;
   for (float i = 0.0; i < no_steps; i++) {
-    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y));
+    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + (i * stepDep));
     TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y));
     interp_point.texturePoint = interp_tp;
     v.push_back(interp_point);
@@ -93,7 +95,9 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    window.setPixelColour(round(x), round(y), get_rgb(colour));
+    if (depthbuf.update(pixel)) {
+      window.setPixelColour(round(x), round(y), get_rgb(colour));
+    }
   }
 }
 
@@ -293,8 +297,8 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   h_i = (h_v * d_i) / d_v;
 
   //scale points
-  w_i = w_i * -80 + (WIDTH / 2);
-  h_i = h_i * 80 + (HEIGHT / 2);
+  w_i = w_i * -40 + (WIDTH / 2);
+  h_i = h_i * 40 + (HEIGHT / 2);
 
   CanvasPoint res(w_i, h_i, depth);
   return res;

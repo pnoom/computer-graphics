@@ -14,6 +14,18 @@ class DepthBuffer {
       instantiateDepthBuf();
     }
 
+    bool update(CanvasPoint pixel) {
+      int px = round(pixel.x);
+      int py = round(pixel.y);
+      if (!((py >= 0) && (py < height) && (px >= 0) && (px < width))) return false;
+      int invz = 1 / pixel.depth;
+      if (invz < depthbuf[py*width + px]) {
+        depthbuf[py*width + px] = invz;
+        return true;
+      }
+      else return false;
+    }
+
   private:
     void instantiateDepthBuf() {
       for (int j = 0; j < height; j++) {
