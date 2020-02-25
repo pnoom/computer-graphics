@@ -292,6 +292,7 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   float d_i = camera.focalLength; // distance from camera to axis extension of canvas
 
   float depth = sqrt((d_v * d_v) + (w_v * w_v) + (h_v * h_v));
+  std::cout << "depth: " << depth << '\n';
 
   w_i = (w_v * d_i) / d_v;
   h_i = (h_v * d_i) / d_v;
@@ -323,6 +324,7 @@ void drawGeometry(std::vector<GObject> gobjs) {
     for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
       //std::cout << "drawing face" << '\n';
       //std::cout << "i: " << i << " , j: " << j << '\n';
+      std::cout << "object: " << gobjs.at(i).name << '\n';
       CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
       drawFilledTriangle(projectedTriangle, false);
       //drawStrokedTriangle(projectedTriangle);

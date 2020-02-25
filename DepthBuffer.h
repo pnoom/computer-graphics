@@ -18,7 +18,7 @@ class DepthBuffer {
       int px = round(pixel.x);
       int py = round(pixel.y);
       if (!((py >= 0) && (py < height) && (px >= 0) && (px < width))) return false;
-      int invz = 1 / pixel.depth;
+      float invz = 1.0f / (float)pixel.depth;
       if (invz < depthbuf[py*width + px]) {
         depthbuf[py*width + px] = invz;
         return true;
