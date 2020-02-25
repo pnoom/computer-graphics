@@ -6,10 +6,11 @@ using namespace std;
 
 class Camera {
   public:
-    vec3 position = vec3(0.0, 0.0, -10.0);
-    mat3 orientation = mat3(1.0F);
+    vec3 position = vec3(0.0, 2.0, 10.0);
+    //mat3 orientation = mat3(1.0F);
+    mat3 orientation = mat3(1, 0, 0, 0, 1, 0, 0, 0, -1);
     float focalLength = position[2] / 2;
-    
+
     Camera () {}
 
     void printCamera() {
