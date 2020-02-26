@@ -352,6 +352,7 @@ void clearScreen() {
       window.setPixelColour(x, y, colour);
     }
   }
+  depthbuf.clear();
 }
 
 void draw() {

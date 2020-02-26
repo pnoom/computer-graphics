@@ -26,6 +26,10 @@ class DepthBuffer {
       else return false;
     }
 
+  void clear() {
+    instantiateDepthBuf();
+  }
+
   private:
     void instantiateDepthBuf() {
       for (int j = 0; j < height; j++) {
