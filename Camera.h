@@ -8,9 +8,9 @@ class Camera {
   public:
     vec3 position = vec3(0.0, 2.0, 10.0);
     //mat3 orientation = mat3(1.0F);
-    mat3 orientation = mat3(-1, 0, 0,    // right
-			    0, -1, 0,    // up
-			    0, 0, -1);  // forward
+    mat3 orientation = mat3(1, 0, 0,    // right
+			    0, 1, 0,    // up
+			    0, 0, 1);  // forward
     float focalLength = position[2] / 2;
 
     Camera () {}

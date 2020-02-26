@@ -328,9 +328,11 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   w_i = (adjVec.x * d_i) / adjVec.z;
   h_i = (adjVec.y * d_i) / adjVec.z;
 
+  double x_factor = WIDTH / 4;
+  double y_factor = HEIGHT / 4;
   //scale points
-  w_i = w_i * -140 + (WIDTH / 2);
-  h_i = h_i *  140 + (HEIGHT / 2);
+  w_i = w_i * x_factor + (WIDTH / 2);
+  h_i = h_i * y_factor + (HEIGHT / 2);
 
   CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
@@ -424,6 +426,7 @@ void draw() {
     std::cout << "Raytracing not yet supported\n";
     exit(1);
   }
+  camera.printCamera();
 }
 
 void update() {
@@ -491,12 +494,12 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_q) {
       cout << "Q: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
-      camera.orientation = camera.orientation * rotMatY(deg2rad(1.0));
+      camera.orientation = rotMatY(deg2rad(1.0)) * camera.orientation;
       draw();
     }
     else if(event.key.keysym.sym == SDLK_e) {
       cout << "Q: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
-      camera.orientation = camera.orientation * rotMatY(deg2rad(-1.0));
+      camera.orientation = rotMatY(deg2rad(-1.0)) * camera.orientation;
       draw();
     }
   }
@@ -507,6 +510,7 @@ void handleEvent(SDL_Event event) {
 int main(int argc, char* argv[]) {
   srand((unsigned) time(0));
   SDL_Event event;
+  // camera.orientation = camera.orientation * rotMatY(deg2rad(180.0));
   draw();
   camera.printCamera();
 
