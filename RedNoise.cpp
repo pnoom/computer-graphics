@@ -318,7 +318,6 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
   return result;
 }
 
-// For now, just draw wireframe triangles
 void drawGeometry(std::vector<GObject> gobjs) {
   //std::cout << "drawing geometry" << '\n';
   for (uint i = 0; i < gobjs.size(); i++) {
@@ -330,6 +329,15 @@ void drawGeometry(std::vector<GObject> gobjs) {
       drawFilledTriangle(projectedTriangle, false);
       //drawStrokedTriangle(projectedTriangle);
 
+    }
+  }
+}
+
+void drawGeometryWireFrame(std::vector<GObject> gobjs) {
+  for (uint i = 0; i < gobjs.size(); i++) {
+    for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
+      CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
+      drawStrokedTriangle(projectedTriangle);
     }
   }
 }
@@ -362,26 +370,23 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
     else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
     else if(event.key.keysym.sym == SDLK_t) {
+      clearScreen();
       cout << "T: DRAWING TEXTUREMAPPED TRIANGLE" << endl;
       drawTextureMappedTriangle();
-    }
-    else if(event.key.keysym.sym == SDLK_f) {
-      //clearScreen();
-      //CanvasTriangle triangle(CanvasPoint(448, 318), CanvasPoint(406, 292), CanvasPoint(40, 172), Colour(255, 0, 0));
-      cout << "F: DRAWING RANDOM FILLED TRIANGLE" << endl;
-      drawRandomTriangle(true);
-    }
-    else if(event.key.keysym.sym == SDLK_s) {
-      cout << "S: DRAWING RANDOM STROKED TRIANGLE" << endl;
-      drawRandomTriangle(false);
     }
     else if(event.key.keysym.sym == SDLK_c) {
       cout << "C: CLEARING SCREEN" << endl;
       clearScreen();
     }
     else if(event.key.keysym.sym == SDLK_b) {
+      clearScreen();
       cout << "B: DRAW CORNELL BOX" << endl;
       drawGeometry(gobjects);
+    }
+    else if(event.key.keysym.sym == SDLK_f) {
+      clearScreen();
+      cout << "F: DRAW WIREFRAME" << endl;
+      drawGeometryWireFrame(gobjects);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
