@@ -82,23 +82,24 @@ std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfVal
 }
 
 std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
-  float delta_X  = to.x - from.x;
-  float delta_Y  = to.y - from.y;
+  float delta_X    = to.x - from.x;
+  float delta_Y    = to.y - from.y;
   float delta_tp_X = to.texturePoint.x - from.texturePoint.x;
   float delta_tp_Y = to.texturePoint.y - from.texturePoint.y;
   double delta_dep = to.depth - from.depth;
 
   float no_steps = max(abs(delta_X), abs(delta_Y));
-  //std::cout << "Steps: " << no_steps << " delta_X: " << delta_X << " delta_Y: " << delta_Y << '\n';
-  float stepSize_X = delta_X / no_steps;
-  float stepSize_Y = delta_Y / no_steps;
+
+  float stepSize_X    = delta_X / no_steps;
+  float stepSize_Y    = delta_Y / no_steps;
   float stepSize_tp_X = delta_tp_X / no_steps;
   float stepSize_tp_Y = delta_tp_Y / no_steps;
-  double stepDep = delta_dep / no_steps;
-
+  double stepSize_dep = delta_dep / no_steps;
+  //std::cout << "From depth: " << from.depth << ", To depth: " << to.depth << '\n';
   std::vector<CanvasPoint> v;
   for (float i = 0.0; i < no_steps; i++) {
-    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + ((double)i * stepDep));
+    CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + (i * stepSize_dep));
+    //std::cout << "Point " << i << ": " << interp_point << '\n';
     TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y));
     interp_point.texturePoint = interp_tp;
     v.push_back(interp_point);
@@ -113,10 +114,10 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    //if (depthbuf.update(pixel)) {
-    //  window.setPixelColour(round(x), round(y), get_rgb(colour));
-    //}
-    window.setPixelColour(round(x), round(y), get_rgb(colour));
+    if (depthbuf.update(pixel)) {
+      window.setPixelColour(round(x), round(y), get_rgb(colour));
+    }
+    //window.setPixelColour(round(x), round(y), get_rgb(colour));
   }
 }
 
@@ -174,6 +175,7 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
   for (int i = 0; i < 3; i++) {
     to->vertices[i].x = from.vertices[i].x;
     to->vertices[i].y = from.vertices[i].y;
+    to->vertices[i].depth = from.vertices[i].depth;
     to->vertices[i].texturePoint = from.vertices[i].texturePoint;
   }
   to->colour = from.colour;
@@ -225,7 +227,10 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
       }
       //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y);
       if (textured) drawTexturedLine(side1.at(i), side2.at(j));
-      else drawLine(side1.at(i), side2.at(j), triangle.colour);
+      else {
+        std::cout << "Side1: " << side1.at(i).depth << " Side2: " << side2.at(j).depth << '\n';
+        drawLine(side1.at(i), side2.at(j), triangle.colour);
+      }
       //std::cout << " DRAWN" << '\n';
       last_drawn_y++;
     }
@@ -319,8 +324,8 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   h_i = (adjVec.y * d_i) / adjVec.z;
 
   //scale points
-  w_i = w_i * -40 + (WIDTH / 2);
-  h_i = h_i * 40 + (HEIGHT / 2);
+  w_i = w_i * -140 + (WIDTH / 2);
+  h_i = h_i *  140 + (HEIGHT / 2);
 
   CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
