@@ -281,6 +281,34 @@ void drawRandomTriangle(bool filled) {
   else drawStrokedTriangle(triangle);
 }
 
+glm::vec3 getAdjustedVector(glm::vec3 v) {
+  glm::vec3 cam2vertex = v - camera.position;
+  return cam2vertex * camera.orientation;
+}
+
+CanvasPoint projectVertexInto2D(glm::vec3 v) {
+  // Vector from camera to verted adjusted w.r.t. to the camera's orientation.
+  glm::vec3 adjVec = getAdjustedVector(v);
+
+  double w_i;                      //  width of canvaspoint from camera axis
+  double h_i;                      // height of canvaspoint from camera axis
+  double d_i = camera.focalLength; // distance from camera to axis extension of canvas
+
+  double depth = sqrt((adjVec.z * adjVec.z) + (adjVec.x * adjVec.x) + (adjVec.y * adjVec.y));
+  // std::cout << "depth: " << depth << '\n';
+
+  w_i = (adjVec.x * d_i) / adjVec.z;
+  h_i = (adjVec.y * d_i) / adjVec.z;
+
+  //scale points
+  w_i = w_i * -40 + (WIDTH / 2);
+  h_i = h_i * 40 + (HEIGHT / 2);
+
+  CanvasPoint res((float)w_i, (float)h_i, depth);
+  return res;
+}
+
+/*
 CanvasPoint projectVertexInto2D(glm::vec3 v) {
   glm::vec3 cam_pos = camera.position;
 
@@ -305,6 +333,7 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
 }
+*/
 
 CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
   CanvasTriangle result;
