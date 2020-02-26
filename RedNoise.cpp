@@ -28,6 +28,24 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 Texture the_image("texture.ppm");
 DepthBuffer depthbuf(WIDTH, HEIGHT);
 
+glm::mat3 rotMatX(float angle) {
+  return mat3(1,0,0,
+	      0,cos(angle), -sin(angle),
+	      0,sin(angle), cos(angle));
+}
+
+glm::mat3 rotMatY(float angle) {
+  return mat3(cos(angle),0,sin(angle),
+	      0,1,0,
+	      -sin(angle),0, cos(angle));
+}
+
+glm::mat3 rotMatZ(float angle) {
+  return mat3(cos(angle),-sin(angle),0,
+	      sin(angle),cos(angle),0,
+	      0,0,1);
+}
+
 Camera camera;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj");
