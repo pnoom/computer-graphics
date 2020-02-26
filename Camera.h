@@ -15,12 +15,26 @@ class Camera {
 
     Camera () {}
 
+    void moveBy(float x, float y, float z) {
+      vec3 translationVector(x, y, z);
+      position += translationVector;
+    }
+
+    void rotateBy(float deg) {
+      orientation = rotMatY(deg2rad(deg)) * orientation;
+    }
+
     void printCamera() {
       printCameraPosition();
       printCameraOrientation();
     }
 
   private:
+    float deg2rad(float deg) { return (deg * M_PI) / 180; }
+
+    glm::mat3 rotMatX(float angle) { return mat3(1,0,0, 0,cos(angle),-sin(angle), 0,sin(angle),cos(angle)); }
+    glm::mat3 rotMatY(float angle) { return mat3(cos(angle),0,sin(angle), 0,1,0, -sin(angle),0,cos(angle)); }
+    glm::mat3 rotMatZ(float angle) { return mat3(cos(angle),-sin(angle),0, sin(angle),cos(angle),0, 0,0,1); }
 
     void printVec3(vec3 v) {
       cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";

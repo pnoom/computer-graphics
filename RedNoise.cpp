@@ -20,69 +20,44 @@
 using namespace std;
 using namespace glm;
 
+// Definitions
+// ---
 #define WIDTH 500
 #define HEIGHT 500
 
 Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
+Colour WHITE = Colour(255, 255, 255);
+Colour BLACK = Colour(0, 0, 0);
 
+typedef enum {WIRE, RASTER, RAY} View_mode;
+
+// Global Object Instantiations
+// ---
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
+
 Texture the_image("texture.ppm");
 DepthBuffer depthbuf(WIDTH, HEIGHT);
-
-typedef enum {WIRE, RASTER, RAY} view_mode;
-
-view_mode current_mode = WIRE;
-
-glm::mat3 rotMatX(float angle) {
-  return mat3(1,0,0,
-	      0,cos(angle), -sin(angle),
-	      0,sin(angle), cos(angle));
-}
-
-glm::mat3 rotMatY(float angle) {
-  return mat3(cos(angle),0,sin(angle),
-	      0,1,0,
-	      -sin(angle),0, cos(angle));
-}
-
-glm::mat3 rotMatZ(float angle) {
-  return mat3(cos(angle),-sin(angle),0,
-	      sin(angle),cos(angle),0,
-	      0,0,1);
-}
-
 Camera camera;
+View_mode current_mode = RASTER;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj");
 
+// Simple Helper Functions
+// ---
 float max(float A, float B) { if (A > B) return A; return B; }
+int modulo(int x, int y) { return ((x % y) + x) % y; }
+bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
+
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
+// Raster Functions
+// ---
 std::vector<double> interpolate(double from, double to, int numberOfValues) {
   double delta = (to - from) / (numberOfValues - 1);
   std::vector<double> v;
   for (int i = 0; i < numberOfValues; i++) v.push_back(from + (i * delta));
   //for (int i = 0; i < numberOfValues; i++) std::cout << v.at(i) << '\n';
-  return v;
-}
-
-std::vector<vec3> interpolate_vec3(glm::vec3 from, glm::vec3 to, int numberOfValues) {
-  double delta_1, delta_2, delta_3;
-  delta_1 = (to[0] - from[0]) / (numberOfValues - 1);
-  delta_2 = (to[1] - from[1]) / (numberOfValues - 1);
-  delta_3 = (to[2] - from[2]) / (numberOfValues - 1);
-  //std::cout << delta_1 << " " << delta_2 << " " << delta_3 << '\n';
-
-  std::vector<vec3> v;
-  for (int i = 0; i < numberOfValues; i++) {
-    double vec3_x = from[0] + (i * delta_1);
-    double vec3_y = from[1] + (i * delta_2);
-    double vec3_z = from[2] + (i * delta_3);
-    vec3 interp_vec3(vec3_x, vec3_y, vec3_z);
-    v.push_back(interp_vec3);
-  }
-  //for (int i = 0; i < numberOfValues; i++) std::cout << v.at(i)[0] << " " << v.at(i)[1] << " " << v.at(i)[2] << '\n';
   return v;
 }
 
@@ -142,33 +117,10 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
   }
 }
 
-int modulo(int x, int y) {
-  return ((x % y) + x) % y;
-}
-
-void generateTriangle(CanvasTriangle *triangle) {
-  float vertices[6];
-  //std::cout << "VERTICES: ";
-  for (int i = 0; i < 6; i++) {
-    vertices[i] = (float)(modulo(rand(), WIDTH));
-  }
-  //for (int i = 0; i < 3; i++) std::cout << i << ": (" << vertices[i * 2] << ", " << vertices[i * 2 + 1] << ") ";
-  //std::cout << '\n';
-  triangle->vertices[0] = CanvasPoint(vertices[0], vertices[1]);
-  triangle->vertices[1] = CanvasPoint(vertices[2], vertices[3]);
-  triangle->vertices[2] = CanvasPoint(vertices[4], vertices[5]);
-  triangle->colour = COLOURS[modulo(rand(), 3)];
-  //triangle->colour = Colour(255, 255, 255);
-}
-
 void drawStrokedTriangle(CanvasTriangle triangle) {
   drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
   drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
   drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
-}
-
-bool comparator(CanvasPoint p1, CanvasPoint p2) {
-  return (p1.y < p2.y);
 }
 
 void sortTrianglePoints(CanvasTriangle *triangle) {
@@ -273,40 +225,13 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
 
   if (triangleIsLine(triangle)) {
     drawLine(triangle.vertices[0], triangle.vertices[1], triangle.colour);
-    drawLine(triangle.vertices[0], triangle.vertices[2], triangle.colour);
     drawLine(triangle.vertices[1], triangle.vertices[2], triangle.colour);
   }
   else {
     getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
-    //std::cout << "TOP" << '\n';
     fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
-    //std::cout << "BOTTOM" << '\n';
     fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
-    //std::cout << "DRAWN TRIANGLE!" << "\n";
   }
-}
-
-void drawTextureMappedTriangle() {
-  CanvasPoint p1(160, 10);
-  CanvasPoint p2(300, 230);
-  CanvasPoint p3(10, 150);
-  p1.texturePoint = TexturePoint(195, 5);
-  p2.texturePoint = TexturePoint(395, 380);
-  p3.texturePoint = TexturePoint(65, 330);
-
-  CanvasTriangle triangle(p1, p2, p3);
-  //std::cout << "p1.tp.x: " << p1.texturePoint.x << " p1.tp.y: " << p1.texturePoint.y << '\n';
-  //std::cout << "p2.tp.x: " << p2.texturePoint.x << " p2.tp.y: " << p2.texturePoint.y << '\n';
-  //std::cout << "p3.tp.x: " << p3.texturePoint.x << " p3.tp.y: " << p3.texturePoint.y << '\n';
-
-  drawFilledTriangle(triangle, true);
-}
-
-void drawRandomTriangle(bool filled) {
-  CanvasTriangle triangle;
-  generateTriangle(&triangle);
-  if (filled) drawFilledTriangle(triangle, false);
-  else drawStrokedTriangle(triangle);
 }
 
 glm::vec3 getAdjustedVector(glm::vec3 v) {
@@ -331,40 +256,13 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   // NOTE: this should not actually be negative
   double x_factor = -WIDTH / 4;
   double y_factor = HEIGHT / 4;
-  
+
   w_i = w_i * x_factor + (WIDTH / 2);
   h_i = h_i * y_factor + (HEIGHT / 2);
 
   CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
 }
-
-/*
-CanvasPoint projectVertexInto2D(glm::vec3 v) {
-  glm::vec3 cam_pos = camera.position;
-
-  double w_v = v[0] - cam_pos[0];  // width of 3-D vertex from camera axis
-  double h_v = v[1] - cam_pos[1];  // height of 3-D vertex from camera axis
-  double d_v = v[2] - cam_pos[2];  // distance from camera to axis extension of point
-
-  double w_i;                      //  width of canvaspoint from camera axis
-  double h_i;                      // height of canvaspoint from camera axis
-  double d_i = camera.focalLength; // distance from camera to axis extension of canvas
-
-  double depth = sqrt((d_v * d_v) + (w_v * w_v) + (h_v * h_v));
-  // std::cout << "depth: " << depth << '\n';
-
-  w_i = (w_v * d_i) / d_v;
-  h_i = (h_v * d_i) / d_v;
-
-  //scale points
-  w_i = w_i * -40 + (WIDTH / 2);
-  h_i = h_i * 40 + (HEIGHT / 2);
-
-  CanvasPoint res((float)w_i, (float)h_i, depth);
-  return res;
-}
-*/
 
 CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
   CanvasTriangle result;
@@ -379,16 +277,12 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 }
 
 void drawGeometry(std::vector<GObject> gobjs) {
-  //std::cout << "drawing geometry" << '\n';
   for (uint i = 0; i < gobjs.size(); i++) {
     for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
-      //std::cout << "drawing face" << '\n';
       //std::cout << "i: " << i << " , j: " << j << '\n';
       //std::cout << "object: " << gobjs.at(i).name << '\n';
       CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
       drawFilledTriangle(projectedTriangle, false);
-      //drawStrokedTriangle(projectedTriangle);
-
     }
   }
 }
@@ -403,15 +297,14 @@ void drawGeometryWireFrame(std::vector<GObject> gobjs) {
 }
 
 void clearScreen() {
-  //Draws a white empty screen
   window.clearPixels();
 
   for(int y=0; y<window.height ;y++) {
     for(int x=0; x<window.width ;x++) {
-      uint32_t colour = (0 << 24) + (255 << 16) + (255 << 8) + 255;
-      window.setPixelColour(x, y, colour);
+      window.setPixelColour(x, y, get_rgb(WHITE));
     }
   }
+
   depthbuf.clear();
 }
 
@@ -430,25 +323,11 @@ void draw() {
   camera.printCamera();
 }
 
-void update() {
-
-  // Function for performing animation (shifting artifacts or moving the camera)
-}
-
-float deg2rad(float deg) {
-  return (deg * M_PI) / 180;
-}
-
 void handleEvent(SDL_Event event) {
   glm::vec3 prev_pos;
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
     else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
-    else if(event.key.keysym.sym == SDLK_t) {
-      clearScreen();
-      cout << "T: DRAWING TEXTUREMAPPED TRIANGLE" << endl;
-      drawTextureMappedTriangle();
-    }
     else if(event.key.keysym.sym == SDLK_c) {
       cout << "C: CLEARING SCREEN" << endl;
       clearScreen();
@@ -465,47 +344,46 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_w) {
       cout << "W: MOVE CAMERA FORWARD" << endl;
-      camera.position = camera.position + glm::vec3(0,0,1);
+      camera.moveBy(0, 0, -1);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_a) {
       cout << "A: MOVE CAMERA LEFT" << endl;
-      camera.position = camera.position + glm::vec3(-1,0,0);
+      camera.moveBy(-1, 0, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_s) {
       cout << "S: MOVE CAMERA BACKWARD" << endl;
-      camera.position = camera.position + glm::vec3(0,0,-1);
+      camera.moveBy(0, 0, 1);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_d) {
       cout << "D: MOVE CAMERA RIGHT" << endl;
-      camera.position = camera.position + glm::vec3(1,0,0);
+      camera.moveBy(1, 0, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_UP) {
       cout << "UP: MOVE CAMERA UP" << endl;
-      camera.position = camera.position + glm::vec3(0,1,0);
+      camera.moveBy(0, 1, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_DOWN) {
       cout << "DOWN: MOVE CAMERA DOWN" << endl;
-      camera.position = camera.position + glm::vec3(0,-1,0);
+      camera.moveBy(0, -1, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_q) {
       cout << "Q: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
-      camera.orientation = rotMatY(deg2rad(1.0)) * camera.orientation;
+      camera.rotateBy(1.0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_e) {
       cout << "Q: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
-      camera.orientation = rotMatY(deg2rad(-1.0)) * camera.orientation;
+      camera.rotateBy(-1.0);
       draw();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
-
 }
 
 int main(int argc, char* argv[]) {
@@ -515,20 +393,10 @@ int main(int argc, char* argv[]) {
   draw();
   camera.printCamera();
 
-  //CanvasTriangle test(CanvasPoint(255, 266), CanvasPoint(305, 266), CanvasPoint(305, 317), COLOURS[2]);
-  //CanvasTriangle test = projectTriangleOntoImagePlane(gobjects.at(6).faces.at(9));
-  //CanvasTriangle test(CanvasPoint(100, 100), CanvasPoint(200, 200), CanvasPoint(300, 300), COLOURS[2]);
-  //if (triangleIsLine(test)) std::cout << "LINE!" << '\n';
-  //drawStrokedTriangle(test);
-  //drawFilledTriangle(test, true);
-
-  while(true)
-  {
+  while(true) {
     // We MUST poll for events - otherwise the window will freeze !
     if(window.pollForInputEvents(&event)) handleEvent(event);
 
-    update();
-    //draw();
     // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
   }
