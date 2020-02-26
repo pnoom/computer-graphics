@@ -61,7 +61,7 @@ class OBJ_IO {
             for (int i=0; i<3; i++) {
               rgb[i] = stof(tokens[i+1], &stof_thing);
             }
-            Colour col(matName, 255*round(rgb[0]), 255*round(rgb[1]), 255*round(rgb[2]));
+            Colour col(matName, round(255*rgb[0]), round(255*rgb[1]), round(255*rgb[2]));
             //materials[matName] = col;
 	    materials.insert({matName, col});
 	    //std::cout << "matName: '" << matName << "'\n";
