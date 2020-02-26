@@ -28,6 +28,10 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 Texture the_image("texture.ppm");
 DepthBuffer depthbuf(WIDTH, HEIGHT);
 
+typedef enum {WIRE, RASTER, RAY} view_mode;
+
+view_mode current_mode = WIRE;
+
 glm::mat3 rotMatX(float angle) {
   return mat3(1,0,0,
 	      0,cos(angle), -sin(angle),
@@ -228,7 +232,7 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
       //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y);
       if (textured) drawTexturedLine(side1.at(i), side2.at(j));
       else {
-        std::cout << "Side1: " << side1.at(i).depth << " Side2: " << side2.at(j).depth << '\n';
+        //std::cout << "Side1: " << side1.at(i).depth << " Side2: " << side2.at(j).depth << '\n';
         drawLine(side1.at(i), side2.at(j), triangle.colour);
       }
       //std::cout << " DRAWN" << '\n';
@@ -409,6 +413,16 @@ void clearScreen() {
 
 void draw() {
   clearScreen();
+  if (current_mode == WIRE) {
+    drawGeometryWireFrame(gobjects);
+  }
+  else if (current_mode == RASTER) {
+    drawGeometry(gobjects);
+  }
+  else {
+    std::cout << "Raytracing not yet supported\n";
+    exit(1);
+  }
 }
 
 void update() {
@@ -430,38 +444,44 @@ void handleEvent(SDL_Event event) {
       clearScreen();
     }
     else if(event.key.keysym.sym == SDLK_b) {
-      clearScreen();
-      cout << "B: DRAW CORNELL BOX" << endl;
-      drawGeometry(gobjects);
+      cout << "B: DRAW CORNELL BOX (RASTER)" << endl;
+      current_mode = RASTER;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_f) {
-      clearScreen();
       cout << "F: DRAW WIREFRAME" << endl;
-      drawGeometryWireFrame(gobjects);
+      current_mode = WIRE;
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_w) {
       cout << "W: MOVE CAMERA FORWARD" << endl;
       camera.position = camera.position + glm::vec3(0,0,1);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_a) {
       cout << "A: MOVE CAMERA LEFT" << endl;
       camera.position = camera.position + glm::vec3(-1,0,0);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_s) {
       cout << "S: MOVE CAMERA BACKWARD" << endl;
       camera.position = camera.position + glm::vec3(0,0,-1);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_d) {
       cout << "D: MOVE CAMERA RIGHT" << endl;
       camera.position = camera.position + glm::vec3(1,0,0);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_UP) {
       cout << "UP: MOVE CAMERA UP" << endl;
       camera.position = camera.position + glm::vec3(0,1,0);
+      draw();
     }
     else if(event.key.keysym.sym == SDLK_DOWN) {
       cout << "DOWN: MOVE CAMERA DOWN" << endl;
       camera.position = camera.position + glm::vec3(0,-1,0);
+      draw();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
