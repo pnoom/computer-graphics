@@ -328,9 +328,10 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   w_i = (adjVec.x * d_i) / adjVec.z;
   h_i = (adjVec.y * d_i) / adjVec.z;
 
-  double x_factor = WIDTH / 4;
+  // NOTE: this should not actually be negative
+  double x_factor = -WIDTH / 4;
   double y_factor = HEIGHT / 4;
-  //scale points
+  
   w_i = w_i * x_factor + (WIDTH / 2);
   h_i = h_i * y_factor + (HEIGHT / 2);
 

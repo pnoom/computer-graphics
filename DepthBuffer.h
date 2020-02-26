@@ -19,7 +19,7 @@ class DepthBuffer {
       int py = round(pixel.y);
       if (!((py >= 0) && (py < height) && (px >= 0) && (px < width))) return false;
       double invz = 1.0 / pixel.depth;
-      if (invz < depthbuf[py*width + px]) {
+      if (invz > depthbuf[py*width + px]) {
         depthbuf[py*width + px] = invz;
         return true;
       }
@@ -34,7 +34,7 @@ class DepthBuffer {
     void instantiateDepthBuf() {
       for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-          depthbuf[(j * width) + i] = std::numeric_limits<double>::infinity();
+          depthbuf[(j * width) + i] = -std::numeric_limits<double>::infinity();
         }
       }
     }
