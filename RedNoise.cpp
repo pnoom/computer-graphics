@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <string>
+#include <math.h>
 
 #include "Texture.h"
 #include "GObject.h"
@@ -430,7 +431,12 @@ void update() {
   // Function for performing animation (shifting artifacts or moving the camera)
 }
 
+float deg2rad(float deg) {
+  return (deg * M_PI) / 180;
+}
+
 void handleEvent(SDL_Event event) {
+  glm::vec3 prev_pos;
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
     else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
@@ -481,6 +487,16 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_DOWN) {
       cout << "DOWN: MOVE CAMERA DOWN" << endl;
       camera.position = camera.position + glm::vec3(0,-1,0);
+      draw();
+    }
+    else if(event.key.keysym.sym == SDLK_q) {
+      cout << "Q: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
+      camera.orientation = camera.orientation * rotMatY(deg2rad(1.0));
+      draw();
+    }
+    else if(event.key.keysym.sym == SDLK_e) {
+      cout << "Q: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
+      camera.orientation = camera.orientation * rotMatY(deg2rad(-1.0));
       draw();
     }
   }
