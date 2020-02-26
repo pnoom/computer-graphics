@@ -415,8 +415,6 @@ void handleEvent(SDL_Event event) {
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
     else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
-    else if(event.key.keysym.sym == SDLK_UP) cout << "UP" << endl;
-    else if(event.key.keysym.sym == SDLK_DOWN) cout << "DOWN" << endl;
     else if(event.key.keysym.sym == SDLK_t) {
       clearScreen();
       cout << "T: DRAWING TEXTUREMAPPED TRIANGLE" << endl;
@@ -435,6 +433,30 @@ void handleEvent(SDL_Event event) {
       clearScreen();
       cout << "F: DRAW WIREFRAME" << endl;
       drawGeometryWireFrame(gobjects);
+    }
+    else if(event.key.keysym.sym == SDLK_w) {
+      cout << "W: MOVE CAMERA FORWARD" << endl;
+      camera.position = camera.position + glm::vec3(0,0,1);
+    }
+    else if(event.key.keysym.sym == SDLK_a) {
+      cout << "A: MOVE CAMERA LEFT" << endl;
+      camera.position = camera.position + glm::vec3(-1,0,0);
+    }
+    else if(event.key.keysym.sym == SDLK_s) {
+      cout << "S: MOVE CAMERA BACKWARD" << endl;
+      camera.position = camera.position + glm::vec3(0,0,-1);
+    }
+    else if(event.key.keysym.sym == SDLK_d) {
+      cout << "D: MOVE CAMERA RIGHT" << endl;
+      camera.position = camera.position + glm::vec3(1,0,0);
+    }
+    else if(event.key.keysym.sym == SDLK_UP) {
+      cout << "UP: MOVE CAMERA UP" << endl;
+      camera.position = camera.position + glm::vec3(0,1,0);
+    }
+    else if(event.key.keysym.sym == SDLK_DOWN) {
+      cout << "DOWN: MOVE CAMERA DOWN" << endl;
+      camera.position = camera.position + glm::vec3(0,-1,0);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
