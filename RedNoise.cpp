@@ -25,6 +25,8 @@ using namespace glm;
 #define WIDTH 500
 #define HEIGHT 500
 
+#define OUTPUT_FILE "screenie.ppm"
+
 Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 Colour WHITE = Colour(255, 255, 255);
 Colour BLACK = Colour(0, 0, 0);
@@ -50,6 +52,30 @@ bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
 
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
+
+void writePPM(string filename) {
+  FILE* f = fopen(filename.c_str(), "w");
+  if (f == NULL) {
+    std::cout << "Could not open file." << '\n';
+    exit(1);
+  }
+  fprintf(f, "P6\n%d %d\n255\n", WIDTH, HEIGHT); // P6
+
+  uint32_t colour;
+  uint8_t r,g,b;
+  for (int j=0; j<HEIGHT; j++) {
+    for (int i=0; i<WIDTH; i++) {
+      colour = window.getPixelColour(i, j);
+      b = (uint8_t)(colour & 0xff);
+      g = (uint8_t)((colour >> 8) & 0xff);
+      r = (uint8_t)((colour >> 16) & 0xff);
+      fputc(r, f);
+      fputc(g, f);
+      fputc(b, f); 
+    }
+  }
+  fclose(f);
+}
 
 // Raster Functions
 // ---
@@ -378,9 +404,13 @@ void handleEvent(SDL_Event event) {
       draw();
     }
     else if(event.key.keysym.sym == SDLK_e) {
-      cout << "Q: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
+      cout << "E: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
       camera.rotateBy(-1.0);
       draw();
+    }
+    else if(event.key.keysym.sym == SDLK_p) {
+      cout << "P: WRITE PPM FILE" << endl;
+      writePPM(OUTPUT_FILE);
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
