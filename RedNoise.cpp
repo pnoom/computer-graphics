@@ -11,11 +11,11 @@
 #include <string>
 #include <math.h>
 
-#include "Texture.h"
-#include "GObject.h"
-#include "OBJ_IO.h"
+#include "Texture.hpp"
+#include "GObject.hpp"
+#include "OBJ_IO.hpp"
 #include "Camera.hpp"
-#include "DepthBuffer.h"
+#include "DepthBuffer.hpp"
 
 using namespace std;
 using namespace glm;
