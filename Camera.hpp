@@ -29,6 +29,18 @@ class Camera {
       printCameraOrientation();
     }
 
+    void lookAt(glm::vec3 target) {
+      glm::vec3 temp = target - position;
+      temp = glm::normalize(temp);
+      orientation[2] = temp;
+      temp = glm::cross(orientation[2], vec3(0,-1,0));
+      temp = glm::normalize(temp);
+      orientation[0] = temp;
+      temp = glm::cross(orientation[0], orientation[2]);
+      temp = glm::normalize(temp);
+      orientation[1] = temp;
+    }
+
   private:
     float deg2rad(float deg) { return (deg * M_PI) / 180; }
 

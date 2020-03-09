@@ -39,7 +39,7 @@ class Texture {
       while(!feof(f)) {
         fread(&linebuf, 1, 3*width, f);
         for (int i = 0; i < width; i++) {
-          uint32_t colour = (linebuf[3*i] << 16) + (linebuf[3*i + 1] << 8) + linebuf[3*i + 2];
+          uint32_t colour = (0x00 << 24) + (linebuf[3*i] << 16) + (linebuf[3*i + 1] << 8) + linebuf[3*i + 2];
           ppm_image[y*width + i] = colour;
         }
         y++;

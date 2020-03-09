@@ -14,7 +14,7 @@
 #include "Texture.h"
 #include "GObject.h"
 #include "OBJ_IO.h"
-#include "Camera.h"
+#include "Camera.hpp"
 #include "DepthBuffer.h"
 
 using namespace std;
@@ -412,6 +412,11 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_p) {
       cout << "P: WRITE PPM FILE" << endl;
       writePPM(OUTPUT_FILE);
+    }
+    else if(event.key.keysym.sym == SDLK_l) {
+      cout << "L: LOOK AT (0,5,-5)" << endl;
+      camera.lookAt(vec3(0,5,-5));
+      draw();
     }
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
