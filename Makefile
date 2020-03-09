@@ -11,7 +11,7 @@ WINDOW_OBJECT = libs/sdw/DrawingWindow.o
 COMPILER = g++
 COMPILER_OPTIONS = -c -pipe -Wall -std=c++11
 DEBUG_OPTIONS = -ggdb -g3
-FUSSY_OPTIONS = -Werror -pedantic
+FUSSY_OPTIONS = -pedantic
 SANITIZER_OPTIONS = -O1 -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer
 SPEEDY_OPTIONS = -Ofast -funsafe-math-optimizations -march=native
 LINKER_OPTIONS =
@@ -23,7 +23,7 @@ SDL_COMPILER_FLAGS := $(shell sdl2-config --cflags)
 SDL_LINKER_FLAGS := $(shell sdl2-config --libs)
 SDW_LINKER_FLAGS := $(WINDOW_OBJECT)
 
-default: diagnostic
+default: debug
 
 # Rule to help find errors (when you get a segmentation fault)
 diagnostic: window
