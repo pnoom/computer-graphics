@@ -265,44 +265,30 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   }
 }
 
-void drawGeometryViaRayTracing() {
-  for (int j=0; j<HEIGHT; j++) {
-    for (int i=0; i<WIDTH; i++) {
-      glm::vec3 rayImgPlaneTarget = imgPlaneToWorld(i, j);
-      glm::vec3 rayDir = getRayDirection(rayImgPlaneTarget);
-      // Find intersected triangle and point of intersection
-      RayTriangleIntersection intersection = getClosestIntersection(rayDir, gobjects);
-      // Get triangle colour and draw it
-      uint32_t colour = get_rgb(intersection.intersectedTriangle.colour);
-      window.setPixelColour(x, y, colour);
+glm::vec3 getClosestIntersection(glm::vec3 rayDir) {
+  // Do matrix inversion stuff
+  for (uint j=0; j<gobjects.size(); j++) {
+    for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+      ModelTriangle triangle = gobjects.at(j).faces.at(i);
+      glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
+      glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
+      glm::vec3 SPVector = camera.position - triangle.vertices[0];
+      glm::mat3 DEMatrix(-rayDir, e0, e1);
+      glm::vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
+      float t = possibleSolution[0];
+      float u = possibleSolution[1];
+      float v = possibleSolution[2];
+      std::cout << "Possible Solution: (" << t << "," << u << "," << v << ")\n";
+      if (((0.0f <= u) && (u <= 1.0f)) &&
+	  ((0.0f <= v) && (v <= 1.0f)) &&
+	  (u + v <= 1.0f)) {
+	std::cout << "Solution: (" << t << "," << u << "," << v << ")\n";
+      }
+      
     }
   }
+  return glm::vec3(0,0,0);
 }
-
-
-
-glm::vec3 imgPlaneToWorld(int imgPlaneX, int imgPlaneY) {
-  // Check +/- sitch
-  glm::vec3 imgPlaneCentre = camera.position + (camera.focalLength*camera.orientation[2]);
-  imgPlaneX = WIDTH/2 - imgPlaneX;
-  imgPlaneY = HEIGHT/2 - imgPlaneY;
-  // Scale these according to scaling performed in projection
-  imgPlaneX *= x_factor;
-  imgPlaneY *= y_factor;
-  // Get the orthogonal vectors and add these to them
-}
-
-glm::vec3 getRayDirection(glm::vec3 imgPlanePointWorld) {
-  // Use camera and arg points to find vector
-  return imgPlanePointWorld - camera.position;
-}
-
-glm::vec3 getClosestIntersection(glm::vec3 rayDir, std::vector<ModelTriangle> faces) {
-  glm::vec3 camPos = camera.position;
-  // Do matrix inversion stuff
-}
-
-
 
 glm::vec3 getAdjustedVector(glm::vec3 v) {
   glm::vec3 cam2vertex = v - camera.position;
@@ -341,6 +327,22 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 
   return result;
 }
+
+/*
+void drawGeometryViaRayTracing() {
+  for (int j=0; j<HEIGHT; j++) {
+    for (int i=0; i<WIDTH; i++) {
+      //glm::vec3 rayImgPlaneTarget = imgPlaneToWorld(i, j);
+      //glm::vec3 rayDir = getRayDirection(rayImgPlaneTarget);
+      // Find intersected triangle and point of intersection
+      //RayTriangleIntersection intersection = getClosestIntersection(rayDir);
+      // Get triangle colour and draw it
+      uint32_t colour = get_rgb(intersection.intersectedTriangle.colour);
+      window.setPixelColour(x, y, colour);
+    }
+  }
+}
+*/
 
 void drawGeometry(std::vector<GObject> gobjs) {
   for (uint i = 0; i < gobjs.size(); i++) {
@@ -383,8 +385,7 @@ void draw() {
     drawGeometry(gobjects);
   }
   else {
-    std::cout << "Raytracing not yet supported\n";
-    exit(1);
+    getClosestIntersection(camera.orientation[2]);
   }
   camera.printCamera();
 }
@@ -455,6 +456,11 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_l) {
       cout << "L: LOOK AT (0,5,-5)" << endl;
       camera.lookAt(vec3(0,5,-5));
+      draw();
+    }
+    else if(event.key.keysym.sym == SDLK_r) {
+      cout << "R: DRAW RAYTRACING" << endl;
+      current_mode = RAY;
       draw();
     }
   }
