@@ -7,16 +7,19 @@ class RayTriangleIntersection
     glm::vec3 intersectionPoint;
     float distanceFromCamera;
     ModelTriangle intersectedTriangle;
+    bool isSolution;
 
     RayTriangleIntersection()
     {
+      isSolution = false;
     }
 
-    RayTriangleIntersection(glm::vec3 point, float distance, ModelTriangle triangle)
+    RayTriangleIntersection(glm::vec3 point, float distance, ModelTriangle triangle, bool is_sol)
     {
         intersectionPoint = point;
         distanceFromCamera = distance;
         intersectedTriangle = triangle;
+        isSolution = is_sol;
     }
 };
 
