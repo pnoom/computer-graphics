@@ -316,14 +316,14 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   float u = possibleSolution[1];
   float v = possibleSolution[2];
 
-  std::cout << "Possible Solution: (" << t << "," << u << "," << v << ")\n";
+  //std::cout << "Possible Solution: (" << t << "," << u << "," << v << ")\n";
 
   if (((0.0f <= u) && (u <= 1.0f)) &&
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f)) {
-        std::cout << "Solution: (" << t << "," << u << "," << v << ")\n";
+        //std::cout << "Solution: (" << t << "," << u << "," << v << ")\n";
         glm::vec3 point3d = triangle.vertices[0] + u*e0 + v*e1;
-        std::cout << "point3d: (" << point3d[0] << "," << point3d[1] << "," << point3d[2] << ")\n";
+        //std::cout << "point3d: (" << point3d[0] << "," << point3d[1] << "," << point3d[2] << ")\n";
         return RayTriangleIntersection(point3d, t, triangle, true);
   }
 
@@ -346,25 +346,28 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
       }
     }
   }
-  if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
+  //if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
   return closestIntersectionFound;
 }
 
-/*
 void drawGeometryViaRayTracing() {
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
-      //glm::vec3 rayImgPlaneTarget = imgPlaneToWorld(i, j);
-      //glm::vec3 rayDir = getRayDirection(rayImgPlaneTarget);
-      // Find intersected triangle and point of intersection
-      //RayTriangleIntersection intersection = getClosestIntersection(rayDir);
-      // Get triangle colour and draw it
-      uint32_t colour = get_rgb(intersection.intersectedTriangle.colour);
-      window.setPixelColour(x, y, colour);
+      glm::vec3 pixelRay(i - WIDTH/2, j - HEIGHT/2, camera.focalLength);
+      RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
+
+      if (intersection.isSolution) {
+        uint32_t colour = get_rgb(intersection.intersectedTriangle.colour);
+        window.setPixelColour(i, j, colour);
+      }
+      else {
+        window.setPixelColour(i, j, get_rgb(BLACK));
+      }
     }
   }
 }
-*/
+
+
 
 void drawGeometry(std::vector<GObject> gobjs) {
   for (uint i = 0; i < gobjs.size(); i++) {
@@ -407,10 +410,13 @@ void draw() {
     drawGeometry(gobjects);
   }
   else {
+    /*
     RayTriangleIntersection rti = getClosestIntersection(camera.orientation[2]);
     cout << rti.intersectedTriangle;
     cout << rti.intersectedTriangle.colour;
     printVec3(rti.intersectionPoint);
+    */
+    drawGeometryViaRayTracing();
   }
   camera.printCamera();
 }
