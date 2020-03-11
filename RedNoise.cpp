@@ -44,6 +44,10 @@ View_mode current_mode = RASTER;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj");
 
+// NOTE: this should not actually be negative
+double x_factor = -WIDTH / 4;
+double y_factor = HEIGHT / 4;
+
 // Simple Helper Functions
 // ---
 float max(float A, float B) { if (A > B) return A; return B; }
@@ -261,6 +265,45 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   }
 }
 
+void drawGeometryViaRayTracing() {
+  for (int j=0; j<HEIGHT; j++) {
+    for (int i=0; i<WIDTH; i++) {
+      glm::vec3 rayImgPlaneTarget = imgPlaneToWorld(i, j);
+      glm::vec3 rayDir = getRayDirection(rayImgPlaneTarget);
+      // Find intersected triangle and point of intersection
+      RayTriangleIntersection intersection = getClosestIntersection(rayDir, gobjects);
+      // Get triangle colour and draw it
+      uint32_t colour = get_rgb(intersection.intersectedTriangle.colour);
+      window.setPixelColour(x, y, colour);
+    }
+  }
+}
+
+
+
+glm::vec3 imgPlaneToWorld(int imgPlaneX, int imgPlaneY) {
+  // Check +/- sitch
+  glm::vec3 imgPlaneCentre = camera.position + (camera.focalLength*camera.orientation[2]);
+  imgPlaneX = WIDTH/2 - imgPlaneX;
+  imgPlaneY = HEIGHT/2 - imgPlaneY;
+  // Scale these according to scaling performed in projection
+  imgPlaneX *= x_factor;
+  imgPlaneY *= y_factor;
+  // Get the orthogonal vectors and add these to them
+}
+
+glm::vec3 getRayDirection(glm::vec3 imgPlanePointWorld) {
+  // Use camera and arg points to find vector
+  return imgPlanePointWorld - camera.position;
+}
+
+glm::vec3 getClosestIntersection(glm::vec3 rayDir, std::vector<ModelTriangle> faces) {
+  glm::vec3 camPos = camera.position;
+  // Do matrix inversion stuff
+}
+
+
+
 glm::vec3 getAdjustedVector(glm::vec3 v) {
   glm::vec3 cam2vertex = v - camera.position;
   return cam2vertex * camera.orientation;
@@ -279,10 +322,6 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
 
   w_i = (adjVec.x * d_i) / adjVec.z;
   h_i = (adjVec.y * d_i) / adjVec.z;
-
-  // NOTE: this should not actually be negative
-  double x_factor = -WIDTH / 4;
-  double y_factor = HEIGHT / 4;
 
   w_i = w_i * x_factor + (WIDTH / 2);
   h_i = h_i * y_factor + (HEIGHT / 2);
