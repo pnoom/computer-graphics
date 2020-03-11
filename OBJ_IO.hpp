@@ -2,6 +2,8 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
+#include <cmath>
 
 using namespace std;
 using namespace glm;
@@ -10,21 +12,55 @@ class OBJ_IO {
   public:
     OBJ_IO () {}
 
-    std::vector<GObject> loadOBJ(string filename) {
+    std::vector<GObject> loadOBJ(string filename, int WIDTH) {
       std::vector<GObject> res = loadOBJpass1(filename);
-      /*
-      for (uint i = 0; i < res.size(); i++) {
-        for (uint j = 0; j < res.at(i).faces.size(); j++) {
-          std::cout << res.at(i).faces.at(j) << '\n';
-        }
-      }
-      */
+      res = scale(WIDTH, res);
       return res;
     }
 
   private:
     bool isemptyline(char* line) {
       return line[0] == '\n';
+    }
+
+    float greatestMagnitudeComponent(glm::vec3 v) {
+      //float greatest = std::max(std::max(abs(v[0]), abs(v[1])), abs(v[2]));
+      float greatest = std::max(abs(v[0]), abs(v[1]));
+      return greatest;
+    }
+
+    std::vector<GObject> scale(int WIDTH, std::vector<GObject> gobjects) {
+      float currentGreatest = 0.0f;
+      for (uint j=0; j<gobjects.size(); j++) {
+        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+          for (int k=0; k<3; k++) {
+            float greatest = greatestMagnitudeComponent(gobjects.at(j).faces.at(i).vertices[k]);
+            if (greatest > currentGreatest) currentGreatest = greatest;
+          }
+        }
+      }
+
+      float scaleFactor = WIDTH / (currentGreatest);
+
+      std::cout << "GREATEST MAGNITUDE VERTEX: " << currentGreatest << '\n';
+      std::cout << "SCALE FACTOR: " << scaleFactor << '\n';
+
+      for (uint j=0; j<gobjects.size(); j++) {
+        //std::cout << "gobject " << gobjects.at(j).name << '\n';
+        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+          for (int k=0; k<3; k++) {
+            glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
+            v[0] = scaleFactor * v[0];
+            v[1] = scaleFactor * v[1];
+            //v[2] = scaleFactor * v[2];
+            gobjects.at(j).faces.at(i).vertices[k] = v;
+            //std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
+          }
+        }
+      }
+      std::cout << "finished scaling" << '\n';
+
+      return gobjects;
     }
 
     unordered_map<string, Colour> loadMTL(string filename) {
@@ -173,7 +209,7 @@ class OBJ_IO {
           mtl_name = tokens[1];
           mtl_name.erase(mtl_name.end() - 1, mtl_name.end());
 	  // std::cout << "mtl_name: '" << mtl_name << "'\n";
-	  
+
           object_mtl_map.insert({object_name, mtl_name});
 	  //std::cout << "colour: " << mtls[mtl_name] << '\n';
 
@@ -204,6 +240,8 @@ class OBJ_IO {
 
       //TODO: vertices and faces can come in any order; this code is too strict on ordering!
       //      -> move the while(tokens[0] == "v") {...} logic out of following an object or smth
-      return loadOBJpass2(filename, mtls, vertices, objects, object_mtl_map);
+
+      std::vector<GObject> gobjects = loadOBJpass2(filename, mtls, vertices, objects, object_mtl_map);
+      return gobjects;
     }
 };

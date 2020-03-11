@@ -41,13 +41,13 @@ DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 //Texture the_image("texture.ppm");
 DepthBuffer depthbuf(WIDTH, HEIGHT);
 Camera camera;
-View_mode current_mode = RASTER;
+View_mode current_mode = WIRE;
 OBJ_IO obj_io;
-std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj");
+std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
 
 // NOTE: this should not actually be negative
-double x_factor = -WIDTH / 4;
-double y_factor = HEIGHT / 4;
+//double x_factor = -WIDTH / 4;
+//double y_factor = HEIGHT / 4;
 
 // Simple Helper Functions
 // ---
@@ -280,20 +280,26 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   double h_i;                      // height of canvaspoint from camera axis
   double d_i = camera.focalLength; // distance from camera to axis extension of canvas
 
+  //printVec3(v);
+  //printVec3(adjVec);
+
   double depth = sqrt((adjVec.z * adjVec.z) + (adjVec.x * adjVec.x) + (adjVec.y * adjVec.y));
   // std::cout << "depth: " << depth << '\n';
 
   w_i = (adjVec.x * d_i) / adjVec.z;
   h_i = (adjVec.y * d_i) / adjVec.z;
 
-  w_i = w_i * x_factor + (WIDTH / 2);
-  h_i = h_i * y_factor + (HEIGHT / 2);
-
+  //w_i = w_i * x_factor + (WIDTH / 2);
+  //h_i = h_i * y_factor + (HEIGHT / 2);
+  w_i += (WIDTH / 2);
+  h_i += (HEIGHT / 2);
+  //std::cout << "W_I " << w_i << " H_I " << h_i << '\n';
   CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
 }
 
 CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
+  //std::cout << "triangle: " << triangle << '\n';
   CanvasTriangle result;
   //generateTriangle(&result);
   for (int i = 0; i < 3; i++) {
@@ -331,7 +337,6 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
 }
 
 RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
-  // Do matrix inversion stuff
   RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
 
   for (uint j=0; j<gobjects.size(); j++) {
@@ -342,6 +347,7 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
       if (possibleSolution.isSolution) {
         if (possibleSolution.distanceFromCamera < closestIntersectionFound.distanceFromCamera) {
           closestIntersectionFound = possibleSolution;
+          //std::cout << "found closer face" << '\n';
         }
       }
     }
@@ -367,23 +373,19 @@ void drawGeometryViaRayTracing() {
   }
 }
 
-
-
-void drawGeometry(std::vector<GObject> gobjs) {
-  for (uint i = 0; i < gobjs.size(); i++) {
-    for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
-      //std::cout << "i: " << i << " , j: " << j << '\n';
-      //std::cout << "object: " << gobjs.at(i).name << '\n';
-      CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
+void drawGeometry() {
+  for (uint i = 0; i < gobjects.size(); i++) {
+    for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
+      CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjects.at(i).faces.at(j));
       drawFilledTriangle(projectedTriangle, false);
     }
   }
 }
 
-void drawGeometryWireFrame(std::vector<GObject> gobjs) {
-  for (uint i = 0; i < gobjs.size(); i++) {
-    for (uint j = 0; j < gobjs.at(i).faces.size(); j++) {
-      CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjs.at(i).faces.at(j));
+void drawGeometryWireFrame() {
+  for (uint i = 0; i < gobjects.size(); i++) {
+    for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
+      CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjects.at(i).faces.at(j));
       drawStrokedTriangle(projectedTriangle);
     }
   }
@@ -404,10 +406,10 @@ void clearScreen() {
 void draw() {
   clearScreen();
   if (current_mode == WIRE) {
-    drawGeometryWireFrame(gobjects);
+    drawGeometryWireFrame();
   }
   else if (current_mode == RASTER) {
-    drawGeometry(gobjects);
+    drawGeometry();
   }
   else {
     /*
@@ -447,7 +449,7 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_a) {
       cout << "A: MOVE CAMERA LEFT" << endl;
-      camera.moveBy(-1, 0, 0);
+      camera.moveBy(-5, 0, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_s) {
@@ -457,17 +459,17 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_d) {
       cout << "D: MOVE CAMERA RIGHT" << endl;
-      camera.moveBy(1, 0, 0);
+      camera.moveBy(5, 0, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_UP) {
       cout << "UP: MOVE CAMERA UP" << endl;
-      camera.moveBy(0, 1, 0);
+      camera.moveBy(0, 5, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_DOWN) {
       cout << "DOWN: MOVE CAMERA DOWN" << endl;
-      camera.moveBy(0, -1, 0);
+      camera.moveBy(0, -5, 0);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_q) {
@@ -499,17 +501,20 @@ void handleEvent(SDL_Event event) {
 }
 
 int main(int argc, char* argv[]) {
-  srand((unsigned) time(0));
   SDL_Event event;
-  // camera.orientation = camera.orientation * rotMatY(deg2rad(180.0));
+
+  for (uint i = 0; i < gobjects.size(); i++) {
+    for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
+      //std::cout << "triangle with : " << gobjects.at(i).name << ": " << gobjects.at(i).faces.at(j) << '\n';
+    }
+  }
+
+  std::cout << "drawing" << '\n';
   draw();
   camera.printCamera();
 
   while(true) {
-    // We MUST poll for events - otherwise the window will freeze !
     if(window.pollForInputEvents(&event)) handleEvent(event);
-
-    // Need to render the frame at the end, or nothing actually gets shown on the screen !
     window.renderFrame();
   }
 }
