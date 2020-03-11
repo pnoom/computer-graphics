@@ -267,6 +267,44 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   }
 }
 
+glm::vec3 getAdjustedVector(glm::vec3 v) {
+  glm::vec3 cam2vertex = v - camera.position;
+  return cam2vertex * camera.orientation;
+}
+
+CanvasPoint projectVertexInto2D(glm::vec3 v) {
+  // Vector from camera to verted adjusted w.r.t. to the camera's orientation.
+  glm::vec3 adjVec = getAdjustedVector(v);
+
+  double w_i;                      //  width of canvaspoint from camera axis
+  double h_i;                      // height of canvaspoint from camera axis
+  double d_i = camera.focalLength; // distance from camera to axis extension of canvas
+
+  double depth = sqrt((adjVec.z * adjVec.z) + (adjVec.x * adjVec.x) + (adjVec.y * adjVec.y));
+  // std::cout << "depth: " << depth << '\n';
+
+  w_i = (adjVec.x * d_i) / adjVec.z;
+  h_i = (adjVec.y * d_i) / adjVec.z;
+
+  w_i = w_i * x_factor + (WIDTH / 2);
+  h_i = h_i * y_factor + (HEIGHT / 2);
+
+  CanvasPoint res((float)w_i, (float)h_i, depth);
+  return res;
+}
+
+CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
+  CanvasTriangle result;
+  //generateTriangle(&result);
+  for (int i = 0; i < 3; i++) {
+    result.vertices[i] = projectVertexInto2D(triangle.vertices[i]);
+    //std::cout << "vertex at " << i << ": " << result.vertices[i] << '\n';
+  }
+  result.colour = triangle.colour;
+
+  return result;
+}
+
 RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir) {
   glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
   glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
@@ -310,44 +348,6 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   }
   if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
   return closestIntersectionFound;
-}
-
-glm::vec3 getAdjustedVector(glm::vec3 v) {
-  glm::vec3 cam2vertex = v - camera.position;
-  return cam2vertex * camera.orientation;
-}
-
-CanvasPoint projectVertexInto2D(glm::vec3 v) {
-  // Vector from camera to verted adjusted w.r.t. to the camera's orientation.
-  glm::vec3 adjVec = getAdjustedVector(v);
-
-  double w_i;                      //  width of canvaspoint from camera axis
-  double h_i;                      // height of canvaspoint from camera axis
-  double d_i = camera.focalLength; // distance from camera to axis extension of canvas
-
-  double depth = sqrt((adjVec.z * adjVec.z) + (adjVec.x * adjVec.x) + (adjVec.y * adjVec.y));
-  // std::cout << "depth: " << depth << '\n';
-
-  w_i = (adjVec.x * d_i) / adjVec.z;
-  h_i = (adjVec.y * d_i) / adjVec.z;
-
-  w_i = w_i * x_factor + (WIDTH / 2);
-  h_i = h_i * y_factor + (HEIGHT / 2);
-
-  CanvasPoint res((float)w_i, (float)h_i, depth);
-  return res;
-}
-
-CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
-  CanvasTriangle result;
-  //generateTriangle(&result);
-  for (int i = 0; i < 3; i++) {
-    result.vertices[i] = projectVertexInto2D(triangle.vertices[i]);
-    //std::cout << "vertex at " << i << ": " << result.vertices[i] << '\n';
-  }
-  result.colour = triangle.colour;
-
-  return result;
 }
 
 /*
