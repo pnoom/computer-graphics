@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <iostream>
+#include <limits>
 
 class RayTriangleIntersection
 {
@@ -12,6 +13,7 @@ class RayTriangleIntersection
     RayTriangleIntersection()
     {
       isSolution = false;
+      distanceFromCamera = std::numeric_limits<float>::infinity();
     }
 
     RayTriangleIntersection(glm::vec3 point, float distance, ModelTriangle triangle, bool is_sol)

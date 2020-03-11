@@ -54,6 +54,7 @@ double y_factor = HEIGHT / 4;
 float max(float A, float B) { if (A > B) return A; return B; }
 int modulo(int x, int y) { return ((x % y) + x) % y; }
 bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
+void printVec3(vec3 v) { cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n"; }
 
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
@@ -293,16 +294,22 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
 
 RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   // Do matrix inversion stuff
+  RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
+
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
-
       RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir);
-      if (possibleSolution.isSolution) return possibleSolution;
+
+      if (possibleSolution.isSolution) {
+        if (possibleSolution.distanceFromCamera < closestIntersectionFound.distanceFromCamera) {
+          closestIntersectionFound = possibleSolution;
+        }
+      }
     }
   }
-  std::cout << "Fired ray did not collide with geometry." << '\n';
-  return RayTriangleIntersection();
+  if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
+  return closestIntersectionFound;
 }
 
 glm::vec3 getAdjustedVector(glm::vec3 v) {
@@ -403,7 +410,7 @@ void draw() {
     RayTriangleIntersection rti = getClosestIntersection(camera.orientation[2]);
     cout << rti.intersectedTriangle;
     cout << rti.intersectedTriangle.colour;
-
+    printVec3(rti.intersectionPoint);
   }
   camera.printCamera();
 }
