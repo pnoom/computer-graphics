@@ -1,6 +1,7 @@
 #include <ModelTriangle.h>
 #include <CanvasTriangle.h>
 #include <DrawingWindow.h>
+#include <RayTriangleIntersection.h>
 #include <Utils.h>
 #include <glm/glm.hpp>
 #include <fstream>
@@ -265,7 +266,7 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   }
 }
 
-glm::vec3 getClosestIntersection(glm::vec3 rayDir) {
+RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   // Do matrix inversion stuff
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
@@ -283,11 +284,12 @@ glm::vec3 getClosestIntersection(glm::vec3 rayDir) {
 	  ((0.0f <= v) && (v <= 1.0f)) &&
 	  (u + v <= 1.0f)) {
 	std::cout << "Solution: (" << t << "," << u << "," << v << ")\n";
+	glm::vec3 point3d = triangle.vertices[0] + u*e0 + v*e0;
+	std::cout << "point3d: (" << point3d[0] << "," << point3d[1] << "," << point3d[2] << ")\n";
+	return RayTriangleIntersection(point3d,t,triangle);
       }
-      
     }
   }
-  return glm::vec3(0,0,0);
 }
 
 glm::vec3 getAdjustedVector(glm::vec3 v) {

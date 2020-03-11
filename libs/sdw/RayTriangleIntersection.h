@@ -20,8 +20,14 @@ class RayTriangleIntersection
     }
 };
 
+/*
+void printVec3(glm::vec3 v) {
+  cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
+}
+
 std::ostream& operator<<(std::ostream& os, const RayTriangleIntersection& intersection)
 {
-    os << "Intersection is at " << intersection.intersectionPoint << " on triangle " << intersection.intersectedTriangle << " at a distance of " << intersection.distanceFromCamera << std::endl;
+  os << "Intersection is at " << printVec3(intersection.intersectionPoint) << " on triangle " << intersection.intersectedTriangle << " at a distance of " << intersection.distanceFromCamera << std::endl;
     return os;
 }
+*/
