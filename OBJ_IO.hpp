@@ -24,8 +24,8 @@ class OBJ_IO {
     }
 
     float greatestMagnitudeComponent(glm::vec3 v) {
-      //float greatest = std::max(std::max(abs(v[0]), abs(v[1])), abs(v[2]));
-      float greatest = std::max(abs(v[0]), abs(v[1]));
+      float greatest = std::max(std::max(abs(v[0]), abs(v[1])), abs(v[2]));
+      //float greatest = std::max(abs(v[0]), abs(v[1]));
       return greatest;
     }
 
@@ -52,7 +52,7 @@ class OBJ_IO {
             glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
             v[0] = scaleFactor * v[0];
             v[1] = scaleFactor * v[1];
-            //v[2] = scaleFactor * v[2];
+            v[2] = scaleFactor * v[2];
             gobjects.at(j).faces.at(i).vertices[k] = v;
             //std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
           }

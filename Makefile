@@ -59,4 +59,4 @@ clean:
 	rm $(EXECUTABLE)
 
 launch-emacs:
-	emacs -nw *.mtl *.obj *.h *.cpp
+	emacs -nw *.mtl *.obj *.h *.hpp *.cpp
