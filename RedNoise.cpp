@@ -414,12 +414,6 @@ void draw() {
     drawGeometry();
   }
   else {
-    /*
-    RayTriangleIntersection rti = getClosestIntersection(camera.orientation[2]);
-    cout << rti.intersectedTriangle;
-    cout << rti.intersectedTriangle.colour;
-    printVec3(rti.intersectionPoint);
-    */
     drawGeometryViaRayTracing();
   }
   camera.printCamera();
@@ -446,7 +440,7 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_w) {
       cout << "W: MOVE CAMERA FORWARD" << endl;
-      camera.moveBy(0, 0, -1);
+      camera.moveBy(0, 0, -5);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_a) {
@@ -456,7 +450,7 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_s) {
       cout << "S: MOVE CAMERA BACKWARD" << endl;
-      camera.moveBy(0, 0, 1);
+      camera.moveBy(0, 0, 5);
       draw();
     }
     else if(event.key.keysym.sym == SDLK_d) {
@@ -505,13 +499,6 @@ void handleEvent(SDL_Event event) {
 int main(int argc, char* argv[]) {
   SDL_Event event;
 
-  for (uint i = 0; i < gobjects.size(); i++) {
-    for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
-      //std::cout << "triangle with : " << gobjects.at(i).name << ": " << gobjects.at(i).faces.at(j) << '\n';
-    }
-  }
-
-  std::cout << "drawing" << '\n';
   draw();
   camera.printCamera();
 
