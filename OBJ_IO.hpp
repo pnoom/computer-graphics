@@ -70,12 +70,12 @@ class OBJ_IO {
           }
         }
       }
-      
+
       float multFactor = WIDTH / (currentMaxComponent);
 
       std::cout << "MULTIPLICATIVE SCALE FACTOR: " << multFactor << '\n';
       std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
-      
+
       for (uint j=0; j<gobjects.size(); j++) {
         //std::cout << "gobject " << gobjects.at(j).name << '\n';
         for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
@@ -83,13 +83,13 @@ class OBJ_IO {
             glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
             v[0] *= multFactor;
             v[1] *= multFactor;
-	    v[2] *= multFactor;
+            v[2] *= multFactor;
             gobjects.at(j).faces.at(i).vertices[k] = v;
-            std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
+            //std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
           }
         }
       }
-      std::cout << "finished scaling" << '\n';
+      //std::cout << "finished scaling" << '\n';
 
       return gobjects;
     }

@@ -328,7 +328,8 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f)) {
         //std::cout << "Solution: (" << t << "," << u << "," << v << ")\n";
-        glm::vec3 point3d = triangle.vertices[0] + u*e0 + v*e1;
+        //glm::vec3 point3d = triangle.vertices[0] + u*e0 + v*e1;
+        glm::vec3 point3d = u*e0 + v*e1;
         //std::cout << "point3d: (" << point3d[0] << "," << point3d[1] << "," << point3d[2] << ")\n";
         return RayTriangleIntersection(point3d, t, triangle, true);
   }
@@ -360,6 +361,7 @@ void drawGeometryViaRayTracing() {
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
       glm::vec3 pixelRay(i - WIDTH/2, j - HEIGHT/2, camera.focalLength);
+      pixelRay = pixelRay * -camera.orientation;
       RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
 
       if (intersection.isSolution) {
