@@ -45,10 +45,6 @@ View_mode current_mode = WIRE;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
 
-// NOTE: this should not actually be negative
-//double x_factor = -WIDTH / 4;
-//double y_factor = HEIGHT / 4;
-
 // Simple Helper Functions
 // ---
 float max(float A, float B) { if (A > B) return A; return B; }
@@ -72,9 +68,9 @@ void writePPM(string filename) {
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
       colour = window.getPixelColour(i, j);
-      b = (uint8_t)(colour & 0xff);
-      g = (uint8_t)((colour >> 8) & 0xff);
       r = (uint8_t)((colour >> 16) & 0xff);
+      g = (uint8_t)((colour >> 8) & 0xff);
+      b = (uint8_t)(colour & 0xff);
       fputc(r, f);
       fputc(g, f);
       fputc(b, f);
@@ -89,7 +85,6 @@ std::vector<double> interpolate(double from, double to, int numberOfValues) {
   double delta = (to - from) / (numberOfValues - 1);
   std::vector<double> v;
   for (int i = 0; i < numberOfValues; i++) v.push_back(from + (i * delta));
-  //for (int i = 0; i < numberOfValues; i++) std::cout << v.at(i) << '\n';
   return v;
 }
 
@@ -107,11 +102,10 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   float stepSize_tp_X = delta_tp_X / no_steps;
   float stepSize_tp_Y = delta_tp_Y / no_steps;
   double stepSize_dep = delta_dep / no_steps;
-  //std::cout << "From depth: " << from.depth << ", To depth: " << to.depth << '\n';
+
   std::vector<CanvasPoint> v;
   for (float i = 0.0; i < no_steps; i++) {
     CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + (i * stepSize_dep));
-    //std::cout << "Point " << i << ": " << interp_point << '\n';
     TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y));
     interp_point.texturePoint = interp_tp;
     v.push_back(interp_point);
@@ -126,10 +120,7 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    if (depthbuf.update(pixel)) {
-      window.setPixelColour(round(x), round(y), get_rgb(colour));
-    }
-    //window.setPixelColour(round(x), round(y), get_rgb(colour));
+    if (depthbuf.update(pixel)) window.setPixelColour(round(x), round(y), get_rgb(colour));
   }
 }
 
@@ -158,7 +149,6 @@ void drawStrokedTriangle(CanvasTriangle triangle) {
 
 void sortTrianglePoints(CanvasTriangle *triangle) {
   std::sort(std::begin(triangle->vertices), std::end(triangle->vertices), comparator);
-  //std::cout << "SORTED: " << triangle->vertices[0].y << " " << triangle->vertices[1].y << " " << triangle->vertices[2].y << '\n';
 }
 
 void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
@@ -173,7 +163,6 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
 
 void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasTriangle *bottom) {
   if ((round(triangle.vertices[0].y) == round(triangle.vertices[1].y)) || (round(triangle.vertices[1].y) == round(triangle.vertices[2].y))) {
-    //std::cout << "detected a flat triangle!" << '\n';
     CanvasPoint temp = triangle.vertices[1];
     triangle.vertices[1] = triangle.vertices[2];
     triangle.vertices[2] = temp;
@@ -199,11 +188,9 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
 }
 
 void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B, bool textured) {
-  //std::cout << "drawing filled triangle: " << triangle << '\n';
   std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[side1_A], triangle.vertices[side1_B]);
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[side2_A], triangle.vertices[side2_B]);
 
-  //std::cout << "side1.size() " << side1.size() << " side2.size() " << side2.size() << "\n";
   uint last_drawn_y = round(side1.at(0).y);
 
   if (textured) drawTexturedLine(side1.at(0), side2.at(0));
@@ -215,13 +202,8 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
       while ((j < (int)side2.size() - 1) && (round(side2.at(j).y) <= last_drawn_y)) {
 	       j++;
       }
-      //std::cout << "i " << round(side1.at(i).y) << " j " << round(side2.at(j).y);
       if (textured) drawTexturedLine(side1.at(i), side2.at(j));
-      else {
-        //std::cout << "Side1: " << side1.at(i).depth << " Side2: " << side2.at(j).depth << '\n';
-        drawLine(side1.at(i), side2.at(j), triangle.colour);
-      }
-      //std::cout << " DRAWN" << '\n';
+      else drawLine(side1.at(i), side2.at(j), triangle.colour);
       last_drawn_y++;
     }
   }
@@ -280,37 +262,27 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
   double h_i;                      // height of canvaspoint from camera axis
   double d_i = camera.focalLength; // distance from camera to axis extension of canvas
 
-  //printVec3(v);
-  //printVec3(adjVec);
-
   double depth = sqrt((adjVec.z * adjVec.z) + (adjVec.x * adjVec.x) + (adjVec.y * adjVec.y));
-  // std::cout << "depth: " << depth << '\n';
 
-  w_i = (adjVec.x * d_i) / adjVec.z;
-  h_i = (adjVec.y * d_i) / adjVec.z;
+  w_i = ((adjVec.x * d_i) / adjVec.z) + (WIDTH / 2);
+  h_i = ((adjVec.y * d_i) / adjVec.z) + (HEIGHT / 2);
 
-  //w_i = w_i * x_factor + (WIDTH / 2);
-  //h_i = h_i * y_factor + (HEIGHT / 2);
-  w_i += (WIDTH / 2);
-  h_i += (HEIGHT / 2);
-  //std::cout << "W_I " << w_i << " H_I " << h_i << '\n';
   CanvasPoint res((float)w_i, (float)h_i, depth);
   return res;
 }
 
 CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
-  //std::cout << "triangle: " << triangle << '\n';
   CanvasTriangle result;
-  //generateTriangle(&result);
   for (int i = 0; i < 3; i++) {
     result.vertices[i] = projectVertexInto2D(triangle.vertices[i]);
-    //std::cout << "vertex at " << i << ": " << result.vertices[i] << '\n';
   }
   result.colour = triangle.colour;
 
   return result;
 }
 
+// Raytracing Functions
+// ---
 RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir) {
   glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
   glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
@@ -322,15 +294,10 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   float u = possibleSolution[1];
   float v = possibleSolution[2];
 
-  //std::cout << "Possible Solution: (" << t << "," << u << "," << v << ")\n";
-
   if (((0.0f <= u) && (u <= 1.0f)) &&
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f)) {
-        //std::cout << "Solution: (" << t << "," << u << "," << v << ")\n";
-        //glm::vec3 point3d = triangle.vertices[0] + u*e0 + v*e1;
         glm::vec3 point3d = u*e0 + v*e1;
-        //std::cout << "point3d: (" << point3d[0] << "," << point3d[1] << "," << point3d[2] << ")\n";
         return RayTriangleIntersection(point3d, t, triangle, true);
   }
 
@@ -348,7 +315,6 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
       if (possibleSolution.isSolution) {
         if (possibleSolution.distanceFromCamera < closestIntersectionFound.distanceFromCamera) {
           closestIntersectionFound = possibleSolution;
-          //std::cout << "found closer face" << '\n';
         }
       }
     }
@@ -357,6 +323,8 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   return closestIntersectionFound;
 }
 
+// High Level Functions
+// ---
 void drawGeometryViaRayTracing() {
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
@@ -449,11 +417,11 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_q) {
       cout << "Q: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
-      camera.rotateBy(-1.0);
+      camera.rotateBy(1.0);
     }
     else if(event.key.keysym.sym == SDLK_e) {
       cout << "E: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
-      camera.rotateBy(1.0);
+      camera.rotateBy(-1.0);
     }
     else if(event.key.keysym.sym == SDLK_p) {
       cout << "P: WRITE PPM FILE" << endl;
