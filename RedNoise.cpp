@@ -381,8 +381,10 @@ void draw() {
 
 void handleEvent(SDL_Event event) {
   if(event.type == SDL_KEYDOWN) {
-    if(event.key.keysym.sym == SDLK_LEFT) cout << "LEFT" << endl;
-    else if(event.key.keysym.sym == SDLK_RIGHT) cout << "RIGHT" << endl;
+    if(event.key.keysym.sym == SDLK_p) {
+      cout << "P: WRITE PPM FILE" << endl;
+      writePPM(OUTPUT_FILE);
+    }
     else if(event.key.keysym.sym == SDLK_b) {
       cout << "B: DRAW CORNELL BOX (RASTER)" << endl;
       current_mode = RASTER;
@@ -391,49 +393,53 @@ void handleEvent(SDL_Event event) {
       cout << "F: DRAW WIREFRAME" << endl;
       current_mode = WIRE;
     }
+    else if(event.key.keysym.sym == SDLK_r) {
+      cout << "R: DRAW RAYTRACING" << endl;
+      current_mode = RAY;
+    }
     else if(event.key.keysym.sym == SDLK_w) {
       cout << "W: MOVE CAMERA FORWARD" << endl;
       camera.moveBy(0, 0, -5);
-    }
-    else if(event.key.keysym.sym == SDLK_a) {
-      cout << "A: MOVE CAMERA LEFT" << endl;
-      camera.moveBy(-5, 0, 0);
     }
     else if(event.key.keysym.sym == SDLK_s) {
       cout << "S: MOVE CAMERA BACKWARD" << endl;
       camera.moveBy(0, 0, 5);
     }
-    else if(event.key.keysym.sym == SDLK_d) {
-      cout << "D: MOVE CAMERA RIGHT" << endl;
+    else if(event.key.keysym.sym == SDLK_a) {
+      cout << "A: MOVE CAMERA LEFT" << endl;
       camera.moveBy(5, 0, 0);
     }
-    else if(event.key.keysym.sym == SDLK_UP) {
-      cout << "UP: MOVE CAMERA UP" << endl;
-      camera.moveBy(0, 5, 0);
-    }
-    else if(event.key.keysym.sym == SDLK_DOWN) {
-      cout << "DOWN: MOVE CAMERA DOWN" << endl;
-      camera.moveBy(0, -5, 0);
+    else if(event.key.keysym.sym == SDLK_d) {
+      cout << "D: MOVE CAMERA RIGHT" << endl;
+      camera.moveBy(-5, 0, 0);
     }
     else if(event.key.keysym.sym == SDLK_q) {
-      cout << "Q: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
-      camera.rotateBy(1.0);
+      cout << "Q: MOVE CAMERA UP" << endl;
+      camera.moveBy(0, -5, 0);
     }
     else if(event.key.keysym.sym == SDLK_e) {
-      cout << "E: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
+      cout << "E: MOVE CAMERA DOWN" << endl;
+      camera.moveBy(0, 5, 0);
+    }
+    else if(event.key.keysym.sym == SDLK_UP) {
+      cout << "UP: ROTATE CAMERA UP" << endl;
+      camera.rotateBy(1.0);
+    }
+    else if(event.key.keysym.sym == SDLK_DOWN) {
+      cout << "DOWN: ROTATE CAMERA DOWN" << endl;
       camera.rotateBy(-1.0);
     }
-    else if(event.key.keysym.sym == SDLK_p) {
-      cout << "P: WRITE PPM FILE" << endl;
-      writePPM(OUTPUT_FILE);
+    else if(event.key.keysym.sym == SDLK_LEFT) {
+      cout << "LEFT: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
+      camera.rotateBy(1.0);
+    }
+    else if(event.key.keysym.sym == SDLK_RIGHT) {
+      cout << "RIGHT: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
+      camera.rotateBy(-1.0);
     }
     else if(event.key.keysym.sym == SDLK_l) {
       cout << "L: LOOK AT (0,5,-5)" << endl;
       camera.lookAt(vec3(0,5,-5));
-    }
-    else if(event.key.keysym.sym == SDLK_r) {
-      cout << "R: DRAW RAYTRACING" << endl;
-      current_mode = RAY;
     }
     draw();
   }
