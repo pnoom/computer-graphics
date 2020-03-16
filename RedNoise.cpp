@@ -44,7 +44,9 @@ Camera camera;
 View_mode current_mode = WIRE;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
-vec3 lightPos(250.0f, 470.0f, 120.0f);
+//vec3 lightPos(250.0f, 470.0f, 120.0f);
+vec3 lightPos(130.0f, 260.0f, 20.0f);
+//vec3 lightPos(250.0f, 375.0f, 750.0f);
 float lightIntensity = 4000.0f;
 
 // Simple Helper Functions
@@ -288,12 +290,12 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 glm::vec3 getNormal(ModelTriangle triangle) {
   glm::vec3 norm = glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0]));
   //glm::vec3 norm_2 = glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0]));
+  norm = glm::normalize(norm);
   return norm;
 }
 
 float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
   glm::vec3 norm = getNormal(triangle);
-  norm = glm::normalize(norm);
   glm::vec3 point_to_light = lightPos - point;
   point_to_light = glm::normalize(point_to_light);
 
@@ -364,8 +366,8 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
 void drawGeometryViaRayTracing() {
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
-      glm::vec3 pixelRay(i - WIDTH/2, -j + HEIGHT/2, camera.focalLength);
-      mat3 adjOrientation(-camera.orientation[0], camera.orientation[1], -camera.orientation[2]);
+      glm::vec3 pixelRay(i - WIDTH/2, j - HEIGHT/2, camera.focalLength);
+      mat3 adjOrientation(camera.orientation[0], camera.orientation[1], camera.orientation[2]);
       pixelRay = pixelRay * adjOrientation;
 
       RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
@@ -504,6 +506,8 @@ int main(int argc, char* argv[]) {
 
   draw();
   camera.printCamera();
+  std::cout << "LIGHT position:\n";
+  printVec3(lightPos);
 
   while(true) {
     if(window.pollForInputEvents(&event)) handleEvent(event);

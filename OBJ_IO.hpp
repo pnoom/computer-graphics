@@ -77,7 +77,7 @@ class OBJ_IO {
       std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
 
       for (uint j=0; j<gobjects.size(); j++) {
-        //std::cout << "gobject " << gobjects.at(j).name << '\n';
+        std::cout << "gobject " << gobjects.at(j).name << '\n';
         for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
           for (int k=0; k<3; k++) {
             glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
@@ -85,7 +85,7 @@ class OBJ_IO {
             v[1] *= multFactor;
             v[2] *= multFactor;
             gobjects.at(j).faces.at(i).vertices[k] = v;
-            //std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
+            std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
           }
         }
       }
