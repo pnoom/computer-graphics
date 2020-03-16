@@ -166,6 +166,16 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
   to->colour = from.colour;
 }
 
+bool compareTriangles(ModelTriangle A, ModelTriangle B) {
+  for (int i = 0; i < 3; i++) {
+    if (round(A.vertices[i][0]) != round(B.vertices[i][0])) return false;
+    if (round(A.vertices[i][1]) != round(B.vertices[i][1])) return false;
+    if (round(A.vertices[i][2]) != round(B.vertices[i][2])) return false;
+  }
+  // TODO compare colours too
+  return true;
+}
+
 void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasTriangle *bottom) {
   if ((round(triangle.vertices[0].y) == round(triangle.vertices[1].y)) || (round(triangle.vertices[1].y) == round(triangle.vertices[2].y))) {
     CanvasPoint temp = triangle.vertices[1];
@@ -345,13 +355,33 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   return RayTriangleIntersection();
 }
 
-RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir, glm::vec3 point) {
+RayTriangleIntersection getShadowIntersection(glm::vec3 rayDir, ModelTriangle self) {
   RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
 
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
-      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, point);
+      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, lightPos);
+
+      if (possibleSolution.isSolution) {
+        if (possibleSolution.distanceFromPoint < closestIntersectionFound.distanceFromPoint
+        && !compareTriangles(possibleSolution.intersectedTriangle, self)) {
+          closestIntersectionFound = possibleSolution;
+        }
+      }
+    }
+  }
+  //if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
+  return closestIntersectionFound;
+}
+
+RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
+  RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
+
+  for (uint j=0; j<gobjects.size(); j++) {
+    for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+      ModelTriangle triangle = gobjects.at(j).faces.at(i);
+      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
 
       if (possibleSolution.isSolution) {
         if (possibleSolution.distanceFromPoint < closestIntersectionFound.distanceFromPoint) {
@@ -364,14 +394,15 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir, glm::vec3 point
   return closestIntersectionFound;
 }
 
-bool isPointInShadow(glm::vec3 point) {
+bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   glm::vec3 point_to_light = -lightPos + point;
 
-  RayTriangleIntersection rti = getClosestIntersection(point_to_light, point);
-  //std::cout << "DIST: " << rti.distanceFromPoint << '\n';
+  RayTriangleIntersection rti = getShadowIntersection(point_to_light, self);
+  //std::cout << "DIST: " << rti.distanceFromPoint << " P2L DIST: " << glm::length(point_to_light) <<'\n';
   if (rti.isSolution
     && (rti.distanceFromPoint < glm::length(point_to_light))
-    && (rti.distanceFromPoint > 1)) {
+    // TODO: fix this condition
+    && (rti.distanceFromPoint > 4)) {
     //std::cout << "FOUND SHADOW AT ";
     //printVec3(point);
     return true;
@@ -388,14 +419,14 @@ void drawGeometryViaRayTracing() {
       mat3 adjOrientation(camera.orientation[0], camera.orientation[1], camera.orientation[2]);
       pixelRay = pixelRay * adjOrientation;
 
-      RayTriangleIntersection intersection = getClosestIntersection(pixelRay, camera.position);
+      RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
 
       if (intersection.isSolution) {
         // TODO: refactor to one function call.
         float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
 
         float intensity = getIntensity(intersection.intersectionPoint);
-        bool pointInShadow = isPointInShadow(intersection.intersectionPoint);
+        bool pointInShadow = isPointInShadow(intersection.intersectionPoint, intersection.intersectedTriangle);
 
         Colour adjustedColour = getAdjustedColour(intersection.intersectedTriangle.colour, intensity, AOI, pointInShadow);
         uint32_t colour = get_rgb(adjustedColour);
