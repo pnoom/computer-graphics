@@ -21,9 +21,9 @@ class Camera {
       position += translationVector;
     }
 
-    void rotateBy(float deg) {
-      orientation = rotMatY(deg2rad(deg)) * orientation;
-    }
+    void rotate_X_By(float deg) { orientation = rotMatX(deg2rad(deg)) * orientation; }
+    void rotate_Y_By(float deg) { orientation = rotMatY(deg2rad(deg)) * orientation; }
+    void rotate_Z_By(float deg) { orientation = rotMatZ(deg2rad(deg)) * orientation; }
 
     void printCamera() {
       printCameraPosition();
