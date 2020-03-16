@@ -44,7 +44,7 @@ Camera camera;
 View_mode current_mode = WIRE;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
-vec3 lightPos(250.0f, 490.0f, 120.0f);
+vec3 lightPos(250.0f, 470.0f, 120.0f);
 float lightIntensity = 4000.0f;
 
 // Simple Helper Functions
@@ -286,7 +286,8 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 // Raytracing Functions
 // ---
 glm::vec3 getNormal(ModelTriangle triangle) {
-  glm::vec3 norm = glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0]));
+  glm::vec3 norm = glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0]));
+  //glm::vec3 norm_2 = glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0]));
   return norm;
 }
 
@@ -296,9 +297,8 @@ float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
   glm::vec3 point_to_light = lightPos - point;
   point_to_light = glm::normalize(point_to_light);
 
-  float AOI = glm::dot(norm, point_to_light);
-  if (AOI <= 1.0f && AOI > 0.0f) return AOI;
-  return 0.0f;
+  float AOI = abs(glm::dot(norm, point_to_light));
+  return AOI;
 }
 
 float getIntensity(glm::vec3 point) {
@@ -309,9 +309,11 @@ float getIntensity(glm::vec3 point) {
 
 Colour getAdjustedColour(Colour inputColour, float intensity, float AOI) {
   Colour res;
-  res.red = inputColour.red * intensity * AOI;
-  res.green = inputColour.green * intensity * AOI;
-  res.blue = inputColour.blue * intensity * AOI;
+  float rgbFactor = intensity * AOI;
+  if (rgbFactor > 1) rgbFactor = 1;
+  res.red = inputColour.red * rgbFactor;
+  res.green = inputColour.green * rgbFactor;
+  res.blue = inputColour.blue * rgbFactor;
   res.name = inputColour.name + " LIGHT ADJUSTED";
 
   return res;
@@ -371,7 +373,8 @@ void drawGeometryViaRayTracing() {
       if (intersection.isSolution) {
         float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
         float intensity = getIntensity(intersection.intersectionPoint);
-        std::cout << "AOI: " << AOI << " INTENSITY: " << intensity << '\n';
+        //std::cout << "AOI: " << AOI << " INTENSITY: " << intensity << '\n';
+
         Colour adjustedColour = getAdjustedColour(intersection.intersectedTriangle.colour, intensity, AOI);
         uint32_t colour = get_rgb(adjustedColour);
 
