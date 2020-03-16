@@ -328,8 +328,10 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
 void drawGeometryViaRayTracing() {
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
-      glm::vec3 pixelRay(i - WIDTH/2, j - HEIGHT/2, camera.focalLength);
-      pixelRay = pixelRay * -camera.orientation;
+      glm::vec3 pixelRay(i - WIDTH/2, -j + HEIGHT/2, camera.focalLength);
+      mat3 adjOrientation(-camera.orientation[0], camera.orientation[1], -camera.orientation[2]);
+      pixelRay = pixelRay * adjOrientation;
+
       RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
 
       if (intersection.isSolution) {
@@ -409,19 +411,19 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_a) {
       cout << "A: MOVE CAMERA LEFT" << endl;
-      camera.moveBy(5, 0, 0);
+      camera.moveBy(-5, 0, 0);
     }
     else if(event.key.keysym.sym == SDLK_d) {
       cout << "D: MOVE CAMERA RIGHT" << endl;
-      camera.moveBy(-5, 0, 0);
+      camera.moveBy(5, 0, 0);
     }
     else if(event.key.keysym.sym == SDLK_q) {
       cout << "Q: MOVE CAMERA UP" << endl;
-      camera.moveBy(0, -5, 0);
+      camera.moveBy(0, 5, 0);
     }
     else if(event.key.keysym.sym == SDLK_e) {
       cout << "E: MOVE CAMERA DOWN" << endl;
-      camera.moveBy(0, 5, 0);
+      camera.moveBy(0, -5, 0);
     }
 
     else if(event.key.keysym.sym == SDLK_UP) {
