@@ -47,7 +47,7 @@ std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
 vec3 lightPos(250.0f, 470.0f, 120.0f);
 //vec3 lightPos(130.0f, 260.0f, 200.0f);
 //vec3 lightPos(250.0f, 375.0f, 750.0f);
-float lightIntensity = 4000.0f;
+float lightIntensity = 2000.0f;
 
 // Simple Helper Functions
 // ---
@@ -344,7 +344,7 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   if (((0.0f <= u) && (u <= 1.0f)) &&
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f)) {
-        glm::vec3 point3d = ((u * e0) + (v * e1));
+        glm::vec3 point3d = triangle.vertices[0] + ((u * e0) + (v * e1));
         return RayTriangleIntersection(point3d, t, triangle, true);
   }
 
@@ -382,6 +382,11 @@ void drawGeometryViaRayTracing() {
       RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
 
       if (intersection.isSolution) {
+        //if (get_rgb(intersection.intersectedTriangle.colour) == get_rgb(WHITE)) {
+          //std::cout << "3D space: ";
+          //printVec3(intersection.intersectionPoint);
+          //std::cout << "i: " << i << " , j: " << j << '\n';
+        //}
         float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
         float intensity = getIntensity(intersection.intersectionPoint);
         //std::cout << "AOI: " << AOI << " INTENSITY: " << intensity << '\n';
