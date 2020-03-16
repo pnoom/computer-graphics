@@ -45,9 +45,9 @@ View_mode current_mode = WIRE;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
 vec3 lightPos(250.0f, 470.0f, 120.0f);
-//vec3 lightPos(130.0f, 260.0f, 200.0f);
-//vec3 lightPos(250.0f, 375.0f, 750.0f);
+//vec3 lightPos(250.0f, 400.0f, 200.0f);
 float lightIntensity = 2000.0f;
+float lightSpread = 4.0f;
 
 // Simple Helper Functions
 // ---
@@ -214,16 +214,6 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   }
 }
 
-/*
-bool getIsLineAB(int A, int B) {
-  for (uint i = 0; i < v.size(); i++) {
-    if ((round(v.at(i).x) == round(triangle.vertices[2].x)) && (round(v.at(i).y) == round(triangle.vertices[2].y))) {
-      return true;
-    }
-  }
-}
-*/
-
 bool triangleIsLine(CanvasTriangle triangle) {
   std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
   for (uint i = 0; i < v.size(); i++) {
@@ -314,7 +304,7 @@ float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
 
 float getIntensity(glm::vec3 point) {
   glm::vec3 point_to_light = lightPos - point;
-  float intensity =  lightIntensity / (4 * M_PI * glm::length(point_to_light));
+  float intensity =  lightIntensity / (lightSpread * M_PI * glm::length(point_to_light));
   return intensity;
 }
 
@@ -322,9 +312,9 @@ Colour getAdjustedColour(Colour inputColour, float intensity, float AOI) {
   Colour res;
   float rgbFactor = intensity * AOI;
   if (rgbFactor > 1) rgbFactor = 1;
-  res.red = round(min(255.0f, (inputColour.red * rgbFactor)));
-  res.green = round(min(255.0f, (inputColour.green * rgbFactor)));
-  res.blue = round(min(255.0f, (inputColour.blue * rgbFactor)));
+  res.red = round(min(255.0f, max(inputColour.red/5, inputColour.red * rgbFactor)));
+  res.green = round(min(255.0f, max(inputColour.green/5, inputColour.green * rgbFactor)));
+  res.blue = round(min(255.0f, max(inputColour.blue/5, inputColour.blue * rgbFactor)));
   res.name = inputColour.name + " LIGHT ADJUSTED";
 
   return res;
