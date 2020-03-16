@@ -6,20 +6,20 @@ class RayTriangleIntersection
 {
   public:
     glm::vec3 intersectionPoint;
-    float distanceFromCamera;
+    float distanceFromPoint;
     ModelTriangle intersectedTriangle;
     bool isSolution;
 
     RayTriangleIntersection()
     {
       isSolution = false;
-      distanceFromCamera = std::numeric_limits<float>::infinity();
+      distanceFromPoint = std::numeric_limits<float>::infinity();
     }
 
     RayTriangleIntersection(glm::vec3 point, float distance, ModelTriangle triangle, bool is_sol)
     {
         intersectionPoint = point;
-        distanceFromCamera = distance;
+        distanceFromPoint = distance;
         intersectedTriangle = triangle;
         isSolution = is_sol;
     }
@@ -28,6 +28,6 @@ class RayTriangleIntersection
 std::ostream& operator<<(std::ostream& os, const RayTriangleIntersection& intersection)
 {
   glm::vec3 v = intersection.intersectionPoint;
-  os << "Intersection is at (" << v[0] << ", " << v[1] << ", " << v[2] << ") on triangle " << intersection.intersectedTriangle << " at a distance of " << intersection.distanceFromCamera << std::endl;
+  os << "Intersection is at (" << v[0] << ", " << v[1] << ", " << v[2] << ") on triangle " << intersection.intersectedTriangle << " at a distance of " << intersection.distanceFromPoint << std::endl;
     return os;
 }

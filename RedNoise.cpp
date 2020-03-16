@@ -292,7 +292,7 @@ float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
   glm::vec3 norm_1 = glm::normalize(glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0])));
   glm::vec3 norm_2 = glm::normalize(glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0])));
 
-  glm::vec3 point_to_light = lightPos - point;
+  glm::vec3 point_to_light = -lightPos + point;
   point_to_light = glm::normalize(point_to_light);
 
   float AOI = glm::dot(norm_1, point_to_light);
@@ -303,27 +303,31 @@ float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
 }
 
 float getIntensity(glm::vec3 point) {
-  glm::vec3 point_to_light = lightPos - point;
+  glm::vec3 point_to_light = -lightPos + point;
   float intensity =  lightIntensity / (lightSpread * M_PI * glm::length(point_to_light));
   return intensity;
 }
 
-Colour getAdjustedColour(Colour inputColour, float intensity, float AOI) {
+Colour getAdjustedColour(Colour inputColour, float intensity, float AOI, bool pointInShadow) {
   Colour res;
+  Colour ambient(inputColour.name + " AMBIENT", inputColour.red/5, inputColour.green/5, inputColour.blue/5);
+  if (pointInShadow) return ambient;
+
   float rgbFactor = intensity * AOI;
   if (rgbFactor > 1) rgbFactor = 1;
-  res.red = round(min(255.0f, max(inputColour.red/5, inputColour.red * rgbFactor)));
-  res.green = round(min(255.0f, max(inputColour.green/5, inputColour.green * rgbFactor)));
-  res.blue = round(min(255.0f, max(inputColour.blue/5, inputColour.blue * rgbFactor)));
+
+  res.red = round(min(255.0f, max(ambient.red, inputColour.red * rgbFactor)));
+  res.green = round(min(255.0f, max(ambient.green, inputColour.green * rgbFactor)));
+  res.blue = round(min(255.0f, max(ambient.blue, inputColour.blue * rgbFactor)));
   res.name = inputColour.name + " LIGHT ADJUSTED";
 
   return res;
 }
 
-RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir) {
+RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir, glm::vec3 point) {
   glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
   glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
-  glm::vec3 SPVector = camera.position - triangle.vertices[0];
+  glm::vec3 SPVector = point - triangle.vertices[0];
   glm::mat3 DEMatrix(-rayDir, e0, e1);
   glm::vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
 
@@ -333,7 +337,7 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
 
   if (((0.0f <= u) && (u <= 1.0f)) &&
       ((0.0f <= v) && (v <= 1.0f)) &&
-      (u + v <= 1.0f)) {
+      (u + v <= 1.0f) && (t >= 0)) {
         glm::vec3 point3d = triangle.vertices[0] + ((u * e0) + (v * e1));
         return RayTriangleIntersection(point3d, t, triangle, true);
   }
@@ -341,16 +345,16 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   return RayTriangleIntersection();
 }
 
-RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
+RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir, glm::vec3 point) {
   RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
 
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
-      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir);
+      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, point);
 
       if (possibleSolution.isSolution) {
-        if (possibleSolution.distanceFromCamera < closestIntersectionFound.distanceFromCamera) {
+        if (possibleSolution.distanceFromPoint < closestIntersectionFound.distanceFromPoint) {
           closestIntersectionFound = possibleSolution;
         }
       }
@@ -358,6 +362,21 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   }
   //if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
   return closestIntersectionFound;
+}
+
+bool isPointInShadow(glm::vec3 point) {
+  glm::vec3 point_to_light = -lightPos + point;
+
+  RayTriangleIntersection rti = getClosestIntersection(point_to_light, point);
+  //std::cout << "DIST: " << rti.distanceFromPoint << '\n';
+  if (rti.isSolution
+    && (rti.distanceFromPoint < glm::length(point_to_light))
+    && (rti.distanceFromPoint > 1)) {
+    //std::cout << "FOUND SHADOW AT ";
+    //printVec3(point);
+    return true;
+  }
+  return false;
 }
 
 // High Level Functions
@@ -369,19 +388,16 @@ void drawGeometryViaRayTracing() {
       mat3 adjOrientation(camera.orientation[0], camera.orientation[1], camera.orientation[2]);
       pixelRay = pixelRay * adjOrientation;
 
-      RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
+      RayTriangleIntersection intersection = getClosestIntersection(pixelRay, camera.position);
 
       if (intersection.isSolution) {
-        //if (get_rgb(intersection.intersectedTriangle.colour) == get_rgb(WHITE)) {
-          //std::cout << "3D space: ";
-          //printVec3(intersection.intersectionPoint);
-          //std::cout << "i: " << i << " , j: " << j << '\n';
-        //}
+        // TODO: refactor to one function call.
         float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
-        float intensity = getIntensity(intersection.intersectionPoint);
-        //std::cout << "AOI: " << AOI << " INTENSITY: " << intensity << '\n';
 
-        Colour adjustedColour = getAdjustedColour(intersection.intersectedTriangle.colour, intensity, AOI);
+        float intensity = getIntensity(intersection.intersectionPoint);
+        bool pointInShadow = isPointInShadow(intersection.intersectionPoint);
+
+        Colour adjustedColour = getAdjustedColour(intersection.intersectedTriangle.colour, intensity, AOI, pointInShadow);
         uint32_t colour = get_rgb(adjustedColour);
 
         window.setPixelColour(i, j, colour);
