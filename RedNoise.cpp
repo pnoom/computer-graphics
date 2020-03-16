@@ -44,14 +44,15 @@ Camera camera;
 View_mode current_mode = WIRE;
 OBJ_IO obj_io;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
-//vec3 lightPos(250.0f, 470.0f, 120.0f);
-vec3 lightPos(130.0f, 260.0f, 20.0f);
+vec3 lightPos(250.0f, 470.0f, 120.0f);
+//vec3 lightPos(130.0f, 260.0f, 200.0f);
 //vec3 lightPos(250.0f, 375.0f, 750.0f);
 float lightIntensity = 4000.0f;
 
 // Simple Helper Functions
 // ---
 float max(float A, float B) { if (A > B) return A; return B; }
+float min(float A, float B) { if (A < B) return A; return B; }
 int modulo(int x, int y) { return ((x % y) + x) % y; }
 bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
 void printVec3(vec3 v) { cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n"; }
@@ -213,6 +214,16 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   }
 }
 
+/*
+bool getIsLineAB(int A, int B) {
+  for (uint i = 0; i < v.size(); i++) {
+    if ((round(v.at(i).x) == round(triangle.vertices[2].x)) && (round(v.at(i).y) == round(triangle.vertices[2].y))) {
+      return true;
+    }
+  }
+}
+*/
+
 bool triangleIsLine(CanvasTriangle triangle) {
   std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
   for (uint i = 0; i < v.size(); i++) {
@@ -287,19 +298,17 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 
 // Raytracing Functions
 // ---
-glm::vec3 getNormal(ModelTriangle triangle) {
-  glm::vec3 norm = glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0]));
-  //glm::vec3 norm_2 = glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0]));
-  norm = glm::normalize(norm);
-  return norm;
-}
-
 float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
-  glm::vec3 norm = getNormal(triangle);
+  glm::vec3 norm_1 = glm::normalize(glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0])));
+  glm::vec3 norm_2 = glm::normalize(glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0])));
+
   glm::vec3 point_to_light = lightPos - point;
   point_to_light = glm::normalize(point_to_light);
 
-  float AOI = abs(glm::dot(norm, point_to_light));
+  float AOI = glm::dot(norm_1, point_to_light);
+  if ((AOI < 0.0f) || (AOI >= 1.0f)) {
+    AOI = glm::dot(norm_2, point_to_light);
+  }
   return AOI;
 }
 
@@ -313,9 +322,9 @@ Colour getAdjustedColour(Colour inputColour, float intensity, float AOI) {
   Colour res;
   float rgbFactor = intensity * AOI;
   if (rgbFactor > 1) rgbFactor = 1;
-  res.red = inputColour.red * rgbFactor;
-  res.green = inputColour.green * rgbFactor;
-  res.blue = inputColour.blue * rgbFactor;
+  res.red = round(min(255.0f, (inputColour.red * rgbFactor)));
+  res.green = round(min(255.0f, (inputColour.green * rgbFactor)));
+  res.blue = round(min(255.0f, (inputColour.blue * rgbFactor)));
   res.name = inputColour.name + " LIGHT ADJUSTED";
 
   return res;
@@ -335,7 +344,7 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   if (((0.0f <= u) && (u <= 1.0f)) &&
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f)) {
-        glm::vec3 point3d = u*e0 + v*e1;
+        glm::vec3 point3d = ((u * e0) + (v * e1));
         return RayTriangleIntersection(point3d, t, triangle, true);
   }
 
@@ -397,6 +406,9 @@ void drawGeometry(bool filled) {
       else drawStrokedTriangle(projectedTriangle);
     }
   }
+
+  CanvasPoint lightCP = projectVertexInto2D(lightPos);
+  window.setPixelColour(lightCP.x, lightCP.y, get_rgb(BLACK));
 }
 
 void clearScreen() {
