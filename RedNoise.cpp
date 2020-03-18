@@ -38,7 +38,7 @@ typedef enum {WIRE, RASTER, RAY} View_mode;
 // ---
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 
-Texture the_image("texture.ppm");
+Texture the_image("cobbles.ppm");
 DepthBuffer depthbuf(WIDTH, HEIGHT);
 Camera camera;
 View_mode current_mode = WIRE;
@@ -298,43 +298,6 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 
 // Raytracing Functions
 // ---
-float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
-  glm::vec3 norm_1 = glm::normalize(glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0])));
-  glm::vec3 norm_2 = glm::normalize(glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0])));
-
-  glm::vec3 point_to_light = -lightPos + point;
-  point_to_light = glm::normalize(point_to_light);
-
-  float AOI = glm::dot(norm_1, point_to_light);
-  if ((AOI < 0.0f) || (AOI >= 1.0f)) {
-    AOI = glm::dot(norm_2, point_to_light);
-  }
-  return AOI;
-}
-
-float getIntensity(glm::vec3 point) {
-  glm::vec3 point_to_light = -lightPos + point;
-  float intensity =  lightIntensity / (lightSpread * M_PI * glm::length(point_to_light));
-  return intensity;
-}
-
-Colour getAdjustedColour(Colour inputColour, float intensity, float AOI, bool pointInShadow) {
-  Colour res;
-  Colour ambient(inputColour.name + " AMBIENT", inputColour.red/5, inputColour.green/5, inputColour.blue/5);
-  if (pointInShadow) return ambient;
-  float adjAOI = AOI + 0.3;
-  if (adjAOI > 1) adjAOI = 1;
-  float rgbFactor = intensity * adjAOI;
-  if (rgbFactor > 1) rgbFactor = 1;
-
-  res.red = round(min(255.0f, max(ambient.red, inputColour.red * rgbFactor)));
-  res.green = round(min(255.0f, max(ambient.green, inputColour.green * rgbFactor)));
-  res.blue = round(min(255.0f, max(ambient.blue, inputColour.blue * rgbFactor)));
-  res.name = inputColour.name + " LIGHT ADJUSTED";
-
-  return res;
-}
-
 RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir, glm::vec3 point, bool canCout) {
   glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
   glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
@@ -357,25 +320,6 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
   return RayTriangleIntersection();
 }
 
-bool getShadowIntersection(glm::vec3 rayDir, ModelTriangle self) {
-
-  for (uint j=0; j<gobjects.size(); j++) {
-    for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
-      ModelTriangle triangle = gobjects.at(j).faces.at(i);
-      if (!compareTriangles(self, triangle)) {
-        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, lightPos, true);
-        if (intersection.isSolution) {
-          if (intersection.distanceFromPoint < glm::length(rayDir)) {
-            return true;
-          }
-        }
-      }
-
-    }
-  }
-  return false;
-}
-
 RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
 
@@ -395,9 +339,65 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   return closestIntersectionFound;
 }
 
-bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
+float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
+  glm::vec3 norm_1 = glm::normalize(glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0])));
+  glm::vec3 norm_2 = glm::normalize(glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0])));
+
   glm::vec3 point_to_light = -lightPos + point;
-  return getShadowIntersection(point_to_light, self);
+  point_to_light = glm::normalize(point_to_light);
+
+  float AOI = glm::dot(norm_1, point_to_light);
+  if ((AOI < 0.0f) || (AOI >= 1.0f)) {
+    AOI = glm::dot(norm_2, point_to_light);
+  }
+  return AOI;
+}
+
+float getIntensity(glm::vec3 point) {
+  glm::vec3 point_to_light = -lightPos + point;
+  float intensity =  lightIntensity / (lightSpread * M_PI * glm::length(point_to_light));
+  return intensity;
+}
+
+bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
+  glm::vec3 rayDir = -lightPos + point;
+  for (uint j=0; j<gobjects.size(); j++) {
+    for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+      ModelTriangle triangle = gobjects.at(j).faces.at(i);
+      if (!compareTriangles(self, triangle)) {
+        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, lightPos, true);
+        if (intersection.isSolution) {
+          if (intersection.distanceFromPoint < glm::length(rayDir)) {
+            return true;
+          }
+        }
+      }
+
+    }
+  }
+  return false;
+}
+
+Colour getAdjustedColour(RayTriangleIntersection intersection) {
+  Colour inputColour = intersection.intersectedTriangle.colour;
+  float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
+  float intensity = getIntensity(intersection.intersectionPoint);
+  bool pointInShadow = isPointInShadow(intersection.intersectionPoint, intersection.intersectedTriangle);
+
+  Colour res;
+  Colour ambient(inputColour.name + " AMBIENT", inputColour.red/5, inputColour.green/5, inputColour.blue/5);
+  if (pointInShadow) return ambient;
+  float adjAOI = AOI + 0.3;
+  if (adjAOI > 1) adjAOI = 1;
+  float rgbFactor = intensity * adjAOI;
+  if (rgbFactor > 1) rgbFactor = 1;
+
+  res.red = round(min(255.0f, max(ambient.red, inputColour.red * rgbFactor)));
+  res.green = round(min(255.0f, max(ambient.green, inputColour.green * rgbFactor)));
+  res.blue = round(min(255.0f, max(ambient.blue, inputColour.blue * rgbFactor)));
+  res.name = inputColour.name + " LIGHT ADJUSTED";
+
+  return res;
 }
 
 // High Level Functions
@@ -415,13 +415,7 @@ void drawGeometryViaRayTracing() {
       RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
 
       if (intersection.isSolution) {
-        // TODO: refactor to one function call.
-        float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
-
-        float intensity = getIntensity(intersection.intersectionPoint);
-        bool pointInShadow = isPointInShadow(intersection.intersectionPoint, intersection.intersectedTriangle);
-
-        Colour adjustedColour = getAdjustedColour(intersection.intersectedTriangle.colour, intensity, AOI, pointInShadow);
+        Colour adjustedColour = getAdjustedColour(intersection);
         uint32_t colour = get_rgb(adjustedColour);
 
         window.setPixelColour(i, j, colour);
@@ -437,7 +431,7 @@ void drawGeometry(bool filled) {
   for (uint i = 0; i < gobjects.size(); i++) {
     for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
       CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjects.at(i).faces.at(j));
-      if (filled) drawFilledTriangle(projectedTriangle, true);
+      if (filled) drawFilledTriangle(projectedTriangle, false);
       else drawStrokedTriangle(projectedTriangle);
     }
   }
