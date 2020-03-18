@@ -21,7 +21,7 @@ class CanvasPoint
       y = yPos;
       depth = 0.0;
       brightness = 1.0;
-      texturePoint = TexturePoint(xPos / 2, yPos / 2);
+      texturePoint = TexturePoint(modulo(xPos, 480), modulo(yPos, 395));
     }
 
     CanvasPoint(float xPos, float yPos, double pointDepth)
@@ -30,7 +30,7 @@ class CanvasPoint
       y = yPos;
       depth = pointDepth;
       brightness = 1.0;
-      texturePoint = TexturePoint(-1,-1);
+      texturePoint = TexturePoint(modulo(xPos, 480), modulo(yPos, 395));
     }
 
     CanvasPoint(float xPos, float yPos, float pointDepth, float pointBrightness)
@@ -42,6 +42,8 @@ class CanvasPoint
       texturePoint = TexturePoint(-1,-1);
     }
 
+  private:
+    float modulo(int x, int y) { return (float)(((x % y) + x) % y); }
 };
 
 std::ostream& operator<<(std::ostream& os, const CanvasPoint& point)
