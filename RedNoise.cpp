@@ -459,6 +459,7 @@ void draw() {
 }
 
 void handleEvent(SDL_Event event) {
+  bool clear = false;
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_p) {
       cout << "P: WRITE PPM FILE" << endl;
@@ -524,14 +525,16 @@ void handleEvent(SDL_Event event) {
       cout << "L: LOOK AT (0,5,-5)" << endl;
       camera.lookAt(vec3(0,5,-5));
     }
-    draw();
+    else if(event.key.keysym.sym == SDLK_c) {
+      cout << "C: CLEARING SCREEN" << endl;
+      clear = true;
+    }
+    if (clear)
+      clearScreen();
+    else
+      draw();
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
-
-  if(event.key.keysym.sym == SDLK_c) {
-    cout << "C: CLEARING SCREEN" << endl;
-    clearScreen();
-  }
 }
 
 int main(int argc, char* argv[]) {
