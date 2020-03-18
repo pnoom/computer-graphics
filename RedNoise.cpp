@@ -38,7 +38,7 @@ typedef enum {WIRE, RASTER, RAY} View_mode;
 // ---
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 
-Texture the_image("cobbles.ppm");
+// Texture the_image("cobbles.ppm");
 DepthBuffer depthbuf(WIDTH, HEIGHT);
 Camera camera;
 View_mode current_mode = WIRE;
@@ -129,9 +129,9 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   }
 }
 
-uint32_t get_textured_pixel(TexturePoint texturePoint) {
-  return the_image.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image.width))];
-}
+//uint32_t get_textured_pixel(TexturePoint texturePoint) {
+//  return the_image.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image.width))];
+//}
 
 void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
@@ -140,8 +140,8 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    uint32_t colour = get_textured_pixel(pixel.texturePoint);
-    //uint32_t colour = 0;
+    //uint32_t colour = get_textured_pixel(pixel.texturePoint);
+    uint32_t colour = 0;
     window.setPixelColour(round(x), round(y), colour);
   }
 }
