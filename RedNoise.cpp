@@ -224,28 +224,20 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   }
 }
 
+bool pointsOnLine(CanvasTriangle triangle, int a, int b, int c) {
+  std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[a], triangle.vertices[b]);
+  for (uint i = 0; i < v.size(); i++) {
+    if ((round(v.at(i).x) == round(triangle.vertices[c].x)) && (round(v.at(i).y) == round(triangle.vertices[c].y))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool triangleIsLine(CanvasTriangle triangle) {
-  std::vector<CanvasPoint> v = interpolate_line(triangle.vertices[0], triangle.vertices[1]);
-  for (uint i = 0; i < v.size(); i++) {
-    if ((round(v.at(i).x) == round(triangle.vertices[2].x)) && (round(v.at(i).y) == round(triangle.vertices[2].y))) {
-      return true;
-    }
-  }
-
-  v = interpolate_line(triangle.vertices[0], triangle.vertices[2]);
-  for (uint i = 0; i < v.size(); i++) {
-    if ((round(v.at(i).x) == round(triangle.vertices[1].x)) && (round(v.at(i).y) == round(triangle.vertices[1].y))) {
-      return true;
-    }
-  }
-
-  v = interpolate_line(triangle.vertices[1], triangle.vertices[2]);
-  for (uint i = 0; i < v.size(); i++) {
-    if ((round(v.at(i).x) == round(triangle.vertices[0].x)) && (round(v.at(i).y) == round(triangle.vertices[0].y))) {
-      return true;
-    }
-  }
-
+  if (pointsOnLine(triangle, 0, 1, 2)) return true;
+  if (pointsOnLine(triangle, 0, 2, 1)) return true;
+  if (pointsOnLine(triangle, 1, 2, 0)) return true;
   return false;
 }
 
