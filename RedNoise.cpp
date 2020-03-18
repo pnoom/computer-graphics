@@ -322,8 +322,9 @@ Colour getAdjustedColour(Colour inputColour, float intensity, float AOI, bool po
   Colour res;
   Colour ambient(inputColour.name + " AMBIENT", inputColour.red/5, inputColour.green/5, inputColour.blue/5);
   if (pointInShadow) return ambient;
-
-  float rgbFactor = intensity * AOI;
+  float adjAOI = AOI + 0.3;
+  if (adjAOI > 1) adjAOI = 1;
+  float rgbFactor = intensity * adjAOI;
   if (rgbFactor > 1) rgbFactor = 1;
 
   res.red = round(min(255.0f, max(ambient.red, inputColour.red * rgbFactor)));
@@ -349,11 +350,7 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f) && (t >= 0)) {
         glm::vec3 point3d = triangle.vertices[0] + ((u * e0) + (v * e1));
-        RayTriangleIntersection res(point3d, t, triangle, true);
-        //if (t > 1 && !canCout) {
-        //  std::cout << "cal c: " << t << '\n';
-        //  std::cout << "res t: " << res.distanceFromPoint << '\n';
-        //}
+        RayTriangleIntersection res(point3d, t * glm::length(rayDir), triangle, true);
         return res;
   }
 
@@ -368,10 +365,7 @@ bool getShadowIntersection(glm::vec3 rayDir, ModelTriangle self) {
       if (!compareTriangles(self, triangle)) {
         RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, lightPos, true);
         if (intersection.isSolution) {
-          if ((intersection.distanceFromPoint * glm::length(rayDir)) < glm::length(rayDir)) {
-            //std::cout << "Point in shadow" << '\n';
-            //if (self.colour.red == 255 && self.colour.green == 0 && self.colour.blue == 0)
-              //std::cout << "col: " << intersection.intersectedTriangle.colour << intersection;
+          if (intersection.distanceFromPoint < glm::length(rayDir)) {
             return true;
           }
         }
