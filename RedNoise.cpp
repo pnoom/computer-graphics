@@ -334,7 +334,7 @@ Colour getAdjustedColour(Colour inputColour, float intensity, float AOI, bool po
   return res;
 }
 
-RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir, glm::vec3 point) {
+RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir, glm::vec3 point, bool canCout) {
   glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
   glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
   glm::vec3 SPVector = point - triangle.vertices[0];
@@ -349,30 +349,37 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f) && (t >= 0)) {
         glm::vec3 point3d = triangle.vertices[0] + ((u * e0) + (v * e1));
-        return RayTriangleIntersection(point3d, t, triangle, true);
+        RayTriangleIntersection res(point3d, t, triangle, true);
+        //if (t > 1 && !canCout) {
+        //  std::cout << "cal c: " << t << '\n';
+        //  std::cout << "res t: " << res.distanceFromPoint << '\n';
+        //}
+        return res;
   }
 
   return RayTriangleIntersection();
 }
 
-RayTriangleIntersection getShadowIntersection(glm::vec3 rayDir, ModelTriangle self) {
-  RayTriangleIntersection closestIntersectionFound = RayTriangleIntersection();
+bool getShadowIntersection(glm::vec3 rayDir, ModelTriangle self) {
 
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
-      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, lightPos);
-
-      if (possibleSolution.isSolution) {
-        if (possibleSolution.distanceFromPoint < closestIntersectionFound.distanceFromPoint
-        && !compareTriangles(possibleSolution.intersectedTriangle, self)) {
-          closestIntersectionFound = possibleSolution;
+      if (!compareTriangles(self, triangle)) {
+        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, lightPos, true);
+        if (intersection.isSolution) {
+          if ((intersection.distanceFromPoint * glm::length(rayDir)) < glm::length(rayDir)) {
+            //std::cout << "Point in shadow" << '\n';
+            //if (self.colour.red == 255 && self.colour.green == 0 && self.colour.blue == 0)
+              //std::cout << "col: " << intersection.intersectedTriangle.colour << intersection;
+            return true;
+          }
         }
       }
+
     }
   }
-  //if (!closestIntersectionFound.isSolution) std::cout << "Fired ray did not collide with geometry." << '\n';
-  return closestIntersectionFound;
+  return false;
 }
 
 RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
@@ -381,7 +388,7 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
-      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position, false);
 
       if (possibleSolution.isSolution) {
         if (possibleSolution.distanceFromPoint < closestIntersectionFound.distanceFromPoint) {
@@ -396,18 +403,7 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
 
 bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   glm::vec3 point_to_light = -lightPos + point;
-
-  RayTriangleIntersection rti = getShadowIntersection(point_to_light, self);
-  //std::cout << "DIST: " << rti.distanceFromPoint << " P2L DIST: " << glm::length(point_to_light) <<'\n';
-  if (rti.isSolution
-    && (rti.distanceFromPoint < glm::length(point_to_light))
-    // TODO: fix this condition
-    && (rti.distanceFromPoint > 4)) {
-    //std::cout << "FOUND SHADOW AT ";
-    //printVec3(point);
-    return true;
-  }
-  return false;
+  return getShadowIntersection(point_to_light, self);
 }
 
 // High Level Functions
