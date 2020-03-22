@@ -400,21 +400,39 @@ void drawGeometryViaRayTracing() {
       // Note: the sign of the y value here is flipped
       //    in pixelRay and adjOrientation
       //    to ensure continuity between raytracer and rasteriser
-      glm::vec3 pixelRay(i - WIDTH/2, -j + HEIGHT/2, camera.focalLength);
+
+      //glm::vec3 pixelRay(i - WIDTH/2, -j + HEIGHT/2, camera.focalLength);
       mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
-      pixelRay = pixelRay * adjOrientation;
+      //pixelRay = pixelRay * adjOrientation;
 
-      RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
+      glm::vec3 pr_1 = glm::vec3(i - WIDTH/2 - 0.25f, -j + HEIGHT/2 - 0.25f, camera.focalLength) * adjOrientation;
+      glm::vec3 pr_2 = glm::vec3(i - WIDTH/2 - 0.25f, -j + HEIGHT/2 + 0.25f, camera.focalLength) * adjOrientation;
+      glm::vec3 pr_3 = glm::vec3(i - WIDTH/2 + 0.25f, -j + HEIGHT/2 - 0.25f, camera.focalLength) * adjOrientation;
+      glm::vec3 pr_4 = glm::vec3(i - WIDTH/2 + 0.25f, -j + HEIGHT/2 + 0.25f, camera.focalLength) * adjOrientation;
 
-      if (intersection.isSolution) {
-        Colour adjustedColour = getAdjustedColour(intersection);
-        uint32_t colour = get_rgb(adjustedColour);
+      //RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
 
-        window.setPixelColour(i, j, colour);
+      RayTriangleIntersection iss[4] = { getClosestIntersection(pr_1),
+                                          getClosestIntersection(pr_2),
+                                          getClosestIntersection(pr_3),
+                                          getClosestIntersection(pr_4) };
+      int AA_red = 0;
+      int AA_green = 0;
+      int AA_blue = 0;
+
+      for (int i = 0; i < 4; i++) {
+        if (iss[i].isSolution) {
+          Colour adjustedColour = getAdjustedColour(iss[i]);
+          //uint32_t colour = get_rgb(adjustedColour);
+
+          AA_red += adjustedColour.red;
+          AA_green += adjustedColour.green;
+          AA_blue += adjustedColour.blue;
+        }
       }
-      else {
-        window.setPixelColour(i, j, get_rgb(BLACK));
-      }
+      Colour AA_res((AA_red / 4), (AA_green / 4), (AA_blue / 4));
+      //Colour AA_res(round(AA_red / 4), round(AA_green / 4), round(AA_blue / 4));
+      window.setPixelColour(i, j, get_rgb(AA_res));
     }
   }
 }
