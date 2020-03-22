@@ -1,29 +1,75 @@
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
+#include <tuple>
 
 using namespace std;
 using namespace glm;
+
+typedef unordered_map<string, Colour> materialDict;
 
 class OBJ_IO {
   public:
     OBJ_IO () {}
 
-    std::vector<GObject> loadOBJ(string filename, int WIDTH) {
-      std::vector<GObject> res = loadOBJpass1(filename);
+    vector<GObject> loadOBJ(string filename, int WIDTH) {
+      vector<GObject> res = loadOBJpass1(filename);
       res = scale(WIDTH, res);
       return res;
     }
 
   private:
+    tuple<materialDict, string> loadMTL(string filename) {
+      materialDict mtlDict;
+      string textureFilename;
+      // Actually read the file here
+      return make_tuple(mtlDict, textureFilename);
+    }
+
+    vector<GObject> loadOBJpass1(string filename) {
+      ifstream inFile;
+      // may need c_str() method
+      inFile.open(filename);
+      if (inFile.fail()) {
+        cout << "File not found." << endl;
+        exit(1);
+      }
+      // Declarations of stuff we want to parse from string input streams
+      string lineString, linePrefix, mtlLibFileName, textureFilename;
+      materialDict mtlDict;
+      float a, b, c;
+      vec3 vertex;
+
+      while (getline(inFile, lineString)) {
+        if (lineString.empty() || lineString.front() == '#') continue;
+        istringstream lineStream(lineString);
+        lineStream >> linePrefix; // use this as the conditional in an if stmt to detect failure
+        if (linePrefix == "mtllib") {
+          lineStream >> mtlLibFileName;
+          tie(mtlDict, textureFilename) = loadMTL(mtlLibFileName);
+        }
+        else if (linePrefix == "v") {
+          lineStream >> a >> b >> c;
+          vertex[0] = a;
+          vertex[1] = b;
+          vertex[2] = c;
+        }
+        else if (linePrefix == "") {
+
+        }
+      }
+
+      inFile.close();
+    }
+
+  /*
     bool isemptyline(char* line) {
       return line[0] == '\n';
     }
-
-    
 
     unordered_map<string, Colour> loadMTL(string filename) {
       FILE* f = fopen(filename.c_str(), "r");
@@ -206,7 +252,8 @@ class OBJ_IO {
       std::vector<GObject> gobjects = loadOBJpass2(filename, mtls, vertices, objects, object_mtl_map);
       return gobjects;
     }
-  
+  */
+
     float maxComponent(glm::vec3 v) {
       float greatest = std::max(std::max(v[0], v[1]), v[2]);
       return greatest;
