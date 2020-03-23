@@ -49,7 +49,38 @@ class OBJ_Structure {
       // "loose") and build a TextureTriangle by referencing the array,
       // and then a ModelTriangle using the other array, and then make a gobject
       // and add it to the vector.
-      
+
+      string objName;
+      faceData face;
+      vec3_int vindices;
+      vec3_int tindices;
+      //vec3_int nindices;
+      ModelTriangle vtriangle;
+      TextureTriangle ttriangle;
+      GObject gobject;
+
+      // This loop won't work: need an ORDERED map, probably...
+      for (auto pair=faceDict.begin(); pair != faceDict.end(); pair++) {
+        objName = pair->first;
+        face = pair->second;
+        vindices = face<0>;
+        // If we have texture vertices, make them into a TextureTriangle
+        if (face<1>) {
+          tindices = face<1>.value();
+          ttriangle = TextureTriangle(textureFilename,
+            allTextureVertices.at(tindices[0]),
+            allTextureVertices.at(tindices[1]),
+            allTextureVertices.at(tindices[2]));
+        }
+        vtriangle = ModelTriangle(
+          allVertices.at(vindices[0]),
+          allVertices.at(vindices[1]),
+          allVertices.at(vindices[2]),
+        ); // colour??? Need an object-material map!!!
+
+        // This needs a VECTOR of ModelTriangles, FFS
+        gobject = GObject(objName, ?, );
+      }
       return result;
     }
 };

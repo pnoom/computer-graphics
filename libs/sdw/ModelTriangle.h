@@ -12,7 +12,6 @@ class ModelTriangle
     glm::vec3 vertices[3];
     Colour colour;
 
-    // TODO: uncomment this!
     // This value will only exist for some ModelTriangles
     optional<TextureTriangle> maybeTextureTriangle;
 
