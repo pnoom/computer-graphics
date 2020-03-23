@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <tuple>
+#include <optional>
 #include "OBJ_Structure.hpp"
 
 using namespace std;
@@ -54,6 +55,7 @@ class OBJ_IO {
 
     // Don't bother having an MTL_Structure class, just use a tuple
     tuple<materialDict, string> loadMTL(string filename) {
+      cout << "Loading included mtl library..." << endl;
       // Return values
       materialDict mtlDict;
       string textureFilename;
@@ -73,18 +75,14 @@ class OBJ_IO {
       string lineString, linePrefix;
 
       while (getline(inFile, lineString)) {
-        cout << "'" << lineString << "'" << endl;
         if (emptyOrCommentLine(lineString)) continue;
         istringstream lineStream(lineString);
         lineStream >> linePrefix; // use this as the conditional in an if stmt to detect failure if needed
-        cout << "'" << linePrefix << "'" << endl;
         if (linePrefix == "map_Kd") {
           lineStream >> textureFilename;
-          cout << "'" << textureFilename << "'" << endl;
         }
         else if (linePrefix == "newmtl") {
           lineStream >> mtlName;
-          cout << "'" << mtlName << "'" << endl;
         }
         // Assumes a "newmtl" line has come before, initialising mtlName
         else if (linePrefix == "Kd") {
@@ -93,11 +91,12 @@ class OBJ_IO {
         }
       }
       inFile.close();
-      cout << "textureFilename" << textureFilename << endl;
+      cout << "textureFilename '" << textureFilename << "'" << endl;
       //cout << "mtlDict" << mtlDict << endl;
-      for (auto pair=mtlDict.begin(); pair != mtlDict.end(); pair++) {
-        cout << "mtlDict: key '" << pair->first << "'" << endl;
-      }
+      //for (auto pair=mtlDict.begin(); pair != mtlDict.end(); pair++) {
+      //  cout << "mtlDict: key '" << pair->first << "' value '" << pair->second << "'" << endl;
+      //}
+      cout << "Loaded mtl library." << endl;
       return make_tuple(mtlDict, textureFilename);
     }
 
@@ -108,6 +107,7 @@ class OBJ_IO {
 
       // Temp vars
       float a, b, c;
+      int d, e;
       vec3 vertex;
       vec2 textureVertex;
       faceData face;
@@ -117,6 +117,8 @@ class OBJ_IO {
       string currentObjMtlName;
       vec3_int vindices;
       vec3_int tindices;
+      string faceTerm; // "v1/" or "v1/vt1" (TODO: or "v1/vt1/vn1", or "v1//vn1")
+      std::string* tokens; // e.g. "v1" and "vt1" from "v1/vt1"
 
       ifstream inFile;
       inFile.open(filename);
@@ -154,11 +156,21 @@ class OBJ_IO {
         }
         else if (linePrefix == "f") {
           // TODO: deal with the / delimiter and optional texture vertex logic
-          //lineStream >> vindices[0] >> vindices[1] >> vindices[2];
-          face = make_tuple(vindices, tindices); // this should copy these arrays from the temp variables
+          for (int i=0; i<3; i++) {
+            lineStream >> faceTerm;
+            tokens = split(faceTerm, ',');
+            //d = stoi(tokens[0], NULL);
+            //e = stoi(tokens[1], NULL);
+            //vindices[0] = d;
+            //tindices[0] = e;
+            //lineStream >> vindices[0] >> vindices[1] >> vindices[2];
+          }
+          //face = make_tuple(vindices, tindices); // this should copy these arrays from the temp variables
+
           // Do I actually need this?
           //structure.allFaces.push_back(face);
-          structure.faceDict.insert({currentObjName, face});
+
+          //structure.faceDict.insert({currentObjName, face});
         }
         else if (linePrefix == "o") {
           lineStream >> currentObjName;
@@ -170,9 +182,7 @@ class OBJ_IO {
             // structure.mtlDict[currentObjMtlName];
         }
       }
-
       inFile.close();
-
       return structure;
     }
 

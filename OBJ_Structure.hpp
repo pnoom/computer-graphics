@@ -1,6 +1,7 @@
 
 #include <unordered_map>
 #include <tuple>
+#include <optional>
 
 using namespace std;
 using namespace glm;
@@ -17,7 +18,7 @@ typedef array<int,3> vec3_int;
 
 // intermediate structure for storing the indices of the vertices and texture
 // vertices that make up a face.
-typedef tuple<vec3_int, vec3_int> faceData;
+typedef tuple<vec3_int, optional<vec3_int>, optional<vec3_int>> faceData;
 
 
 class OBJ_Structure {
