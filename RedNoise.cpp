@@ -53,7 +53,7 @@ int number_of_AA_samples = 4;
 // ---
 float max(float A, float B) { if (A > B) return A; return B; }
 float min(float A, float B) { if (A < B) return A; return B; }
-int modulo(int x, int y) { return ((x % y) + x) % y; }
+int modulo(int x, int y) { if (y == 0) return x; return ((x % y) + x) % y; }
 bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
 void printVec3(vec3 v) { cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n"; }
 
@@ -400,12 +400,17 @@ void drawGeometryViaRayTracing() {
       int x =  i - WIDTH / 2;
       int y = -j + HEIGHT / 2;
 
-      glm::vec3 subPixelRays[4];
+      glm::vec3 subPixelRays[number_of_AA_samples];
       for (int i = 0; i < number_of_AA_samples; i++) {
+        //Sets up the x and y sub-pixel offsets using modulo and boundary conditions
         float x_Offset = 0.25f;
         float y_Offset = 0.25f;
-        if (modulo(i, 2) == 0) x_Offset *= -1;
-        if (i >= 2) y_Offset *= -1;
+        if (modulo(i, (number_of_AA_samples / 2)) == 0) x_Offset *= -1;
+        if (i >= (number_of_AA_samples / 2)) y_Offset *= -1;
+        if (i >= 4) {
+          y_Offset *= 0.5f;
+          x_Offset *= 0.5f;
+        }
 
         glm::vec3 pr = glm::vec3(x - x_Offset, y - y_Offset, camera.focalLength);
         subPixelRays[i] = pr;
