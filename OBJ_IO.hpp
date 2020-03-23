@@ -53,6 +53,39 @@ class OBJ_IO {
       return (lineString.empty() || lineString.front() == '#');
     }
 
+    // Be sure to add parameters as needed
+    faceData processFaceLine(istringstream& lineStream) {
+      istringstream faceTermStream;
+      string faceTerm, subTerm;
+      vec3_int vindices;
+      vec3_int tindices;
+      vec3_int nindices;
+      int i = 0;
+      // Repeatedly get "v1/vt1" or similar, then parse /-delimited ints
+      while (lineStream >> faceTerm) {
+        faceTermStream = istringstream(faceTerm);
+          // Get string of first subTerm
+          getline(faceTermStream, subTerm, '/');
+          vindices[i] = stoi(subTerm, NULL);
+          // Get string of second subTerm. May fail if faceTerm like "v1/"
+          getline(faceTermStream, subTerm, '/');
+          // if (subTerm.size() == 0)
+          tindices[i] = stoi(subTerm, NULL);
+          // Get third subTerm (everything up till end of line)
+          getline(faceTermStream, subTerm);
+          nindices[i] = stoi(subTerm, NULL);
+      }
+
+        //d = stoi(tokens[0], NULL);
+        //e = stoi(tokens[1], NULL);
+        //vindices[0] = d;
+        //tindices[0] = e;
+        //lineStream >> vindices[0] >> vindices[1] >> vindices[2];
+      //face = make_tuple(vindices, tindices); // this should copy these arrays from the temp variables
+
+
+    }
+
     // Don't bother having an MTL_Structure class, just use a tuple
     tuple<materialDict, string> loadMTL(string filename) {
       cout << "Loading included mtl library..." << endl;
@@ -115,8 +148,6 @@ class OBJ_IO {
       int vtIndex = 1;
       string currentObjName = "loose";
       string currentObjMtlName;
-      vec3_int vindices;
-      vec3_int tindices;
       string faceTerm; // "v1/" or "v1/vt1" (TODO: or "v1/vt1/vn1", or "v1//vn1")
       std::string* tokens; // e.g. "v1" and "vt1" from "v1/vt1"
 
@@ -155,21 +186,12 @@ class OBJ_IO {
           vtIndex += 1;
         }
         else if (linePrefix == "f") {
-          // TODO: deal with the / delimiter and optional texture vertex logic
-          for (int i=0; i<3; i++) {
-            lineStream >> faceTerm;
-            tokens = split(faceTerm, ',');
-            //d = stoi(tokens[0], NULL);
-            //e = stoi(tokens[1], NULL);
-            //vindices[0] = d;
-            //tindices[0] = e;
-            //lineStream >> vindices[0] >> vindices[1] >> vindices[2];
-          }
-          //face = make_tuple(vindices, tindices); // this should copy these arrays from the temp variables
+          face = processFaceLine(lineStream);
 
           // Do I actually need this?
           //structure.allFaces.push_back(face);
 
+          // I definitely need this. TODO: uncomment
           //structure.faceDict.insert({currentObjName, face});
         }
         else if (linePrefix == "o") {

@@ -2,7 +2,7 @@
 #include "Colour.h"
 #include <string>
 #include <optional>
-//#include "TextureTriangle.hpp"
+#include "TextureTriangle.hpp"
 
 using namespace std;
 
@@ -14,7 +14,7 @@ class ModelTriangle
 
     // TODO: uncomment this!
     // This value will only exist for some ModelTriangles
-    // optional<TextureTriangle> maybeTextureTriangle;
+    optional<TextureTriangle> maybeTextureTriangle;
 
     // If this ModelTriangle does not have a TextureTriangle, this vector
     // will always be empty.
