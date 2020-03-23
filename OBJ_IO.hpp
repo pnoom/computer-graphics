@@ -23,7 +23,9 @@ class OBJ_IO {
     // First process included .mtl files (build dictionary of materials and/or
     // get the filename of the texture file.) Then go through whole file and:
     // Store all vertices and texture coords in two vectors. (Can't do faces yet
-    // since they use global indices for vertices.)
+    // since they use global indices for vertices.) (Actually, we CAN, if we
+    // just store the indices for now. Then, in second pass, we can build them.
+    // The second pass is needed mainly for the "named object" stuff.)
 
     // Pass 2:
     // Go through whole file again (tracking the indices of vertices, texture
