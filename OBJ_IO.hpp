@@ -6,11 +6,10 @@
 #include <algorithm>
 #include <cmath>
 #include <tuple>
+#include "OBJ_Structure.hpp"
 
 using namespace std;
 using namespace glm;
-
-typedef unordered_map<string, Colour> materialDict;
 
 class OBJ_IO {
   public:
@@ -51,6 +50,7 @@ class OBJ_IO {
       return (lineString.empty() || lineString.front() == '#');
     }
 
+    // Don't bother having an MTL_Structure class, just use a tuple
     tuple<materialDict, string> loadMTL(string filename) {
       // Declarations of stuff we want to parse from (string) input streams
       materialDict mtlDict;
@@ -93,14 +93,10 @@ class OBJ_IO {
     }
 
     vector<GObject> loadOBJpass1(string filename) {
-      // Declarations of stuff we want to parse from (string) input streams
-      string mtlLibFileName, textureFilename, objName, objMtlName;
-      materialDict mtlDict;
+      OBJ_Structure structure();
+
       float a, b, c;
       vec3 vertex;
-      vector<vec3> vertices;
-      vectorTexturePoint> textureCoords;
-      vector<GObject> gobjects;
       //gobjects.push_back();
       int vIndex = 1;
       int vtIndex = 1;
