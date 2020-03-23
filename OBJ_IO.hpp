@@ -73,29 +73,31 @@ class OBJ_IO {
       string lineString, linePrefix;
 
       while (getline(inFile, lineString)) {
+        cout << "'" << lineString << "'" << endl;
         if (emptyOrCommentLine(lineString)) continue;
         istringstream lineStream(lineString);
         lineStream >> linePrefix; // use this as the conditional in an if stmt to detect failure if needed
+        cout << "'" << linePrefix << "'" << endl;
         if (linePrefix == "map_Kd") {
           lineStream >> textureFilename;
+          cout << "'" << textureFilename << "'" << endl;
         }
         else if (linePrefix == "newmtl") {
           lineStream >> mtlName;
-          skipToNextLine(inFile);
-          lineStream >> linePrefix;
-          if (linePrefix == "Kd") {
-            lineStream >> r >> g >> b;
-            mtlDict.insert({mtlName, Colour(mtlName, round(255*r), round(255*g), round(255*b))});
-          }
-          else {
-            cout << "Line after 'newmtl' should be 'Kd r g b'." << endl;
-            exit(1);
-          }
+          cout << "'" << mtlName << "'" << endl;
+        }
+        // Assumes a "newmtl" line has come before, initialising mtlName
+        else if (linePrefix == "Kd") {
+          lineStream >> r >> g >> b;
+          mtlDict.insert({mtlName, Colour(mtlName, round(255*r), round(255*g), round(255*b))});
         }
       }
       inFile.close();
       cout << "textureFilename" << textureFilename << endl;
       //cout << "mtlDict" << mtlDict << endl;
+      for (auto pair=mtlDict.begin(); pair != mtlDict.end(); pair++) {
+        cout << "mtlDict: key '" << pair->first << "'" << endl;
+      }
       return make_tuple(mtlDict, textureFilename);
     }
 
@@ -160,17 +162,12 @@ class OBJ_IO {
         }
         else if (linePrefix == "o") {
           lineStream >> currentObjName;
-          skipToNextLine(inFile);
-          lineStream >> linePrefix;
-          if (linePrefix == "usemtl") {
+        }
+        // Assumes an "o" line has come before it, initialising currentObjName
+        else if (linePrefix == "usemtl") {
             lineStream >> currentObjMtlName;
             // At some point, get material from dict like this:
             // structure.mtlDict[currentObjMtlName];
-          }
-          else {
-            cout << "Line after 'o' line should be 'usemtl materialName'." << endl;
-            exit(1);
-          }
         }
       }
 
