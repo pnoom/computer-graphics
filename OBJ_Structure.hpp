@@ -35,7 +35,14 @@ class OBJ_Structure {
     // FaceData just contain indices. This vector may not be necessary
     vector<faceData> allFaces;
     // These map object names to indices into the above vectors
-    indexDict vertexDict, textureVertexDict, faceDict;
+    indexDict vertexDict, textureVertexDict;
+    unordered_map<string, faceData> faceDict;
 
     OBJ_Structure () {}
+
+    vector<GObject> toGObjects() {
+      vector<GObject> result;
+      // TODO: implement me
+      return result;
+    }
 };

@@ -36,7 +36,9 @@ class OBJ_IO {
     // Finally, go through the intermediate structures representing these named
     // objects, building gobjects (first ModelTriangles)
     vector<GObject> loadOBJ(string filename, int WIDTH) {
-      vector<GObject> res = loadOBJpass1(filename);
+      vector<GObject> res;
+      OBJ_Structure structure = loadOBJpass1(filename);
+      res = structure.toGObjects();
       res = scale(WIDTH, res);
       return res;
     }
@@ -95,10 +97,10 @@ class OBJ_IO {
       return make_tuple(mtlDict, textureFilename);
     }
 
-    vector<GObject> loadOBJpass1(string filename) {
+    OBJ_Structure loadOBJpass1(string filename) {
       // Store all intermediate stuff in here. Use it to build a vector of
       // gobjects.
-      OBJ_Structure structure();
+      OBJ_Structure structure;
 
       // Temp vars
       float a, b, c;
@@ -147,8 +149,8 @@ class OBJ_IO {
         }
         else if (linePrefix == "f") {
           // TODO: deal with the / delimiter and optional texture vertex logic
-          //lineStream >> indices[0] >> indices[1] >> indices[2];
-          face = make_tuple(indices, tindices); // this should copy these arrays from the temp variables
+          //lineStream >> vindices[0] >> vindices[1] >> vindices[2];
+          face = make_tuple(vindices, tindices); // this should copy these arrays from the temp variables
           // Do I actually need this?
           //structure.allFaces.push_back(face);
           structure.faceDict.insert({currentObjName, face});
@@ -159,7 +161,8 @@ class OBJ_IO {
           lineStream >> linePrefix;
           if (linePrefix == "usemtl") {
             lineStream >> currentObjMtlName;
-            mtlDict.insert({mtlName, Colour(currentObjMtlName, round(255*r), round(255*g), round(255*b))});
+            // At some point, get material from dict like this:
+            // structure.mtlDict[currentObjMtlName];
           }
           else {
             cout << "Line after 'o' line should be 'usemtl materialName'." << endl;
@@ -170,7 +173,7 @@ class OBJ_IO {
 
       inFile.close();
 
-      return gobjects;
+      return structure;
     }
 
     float maxComponent(glm::vec3 v) {
