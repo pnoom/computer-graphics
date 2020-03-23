@@ -44,6 +44,12 @@ class OBJ_Structure {
     vector<GObject> toGObjects() {
       vector<GObject> result;
       // TODO: implement me
+
+      // Loop through faceDict's key (i.e. all the objects in the scene, incl.
+      // "loose") and build a TextureTriangle by referencing the array,
+      // and then a ModelTriangle using the other array, and then make a gobject
+      // and add it to the vector.
+      
       return result;
     }
 };
