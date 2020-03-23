@@ -130,7 +130,6 @@ class OBJ_IO {
 
       // Temp vars
       float a, b, c;
-      int d, e;
       vec3 vertex;
       vec2 textureVertex;
       faceData face;
@@ -138,8 +137,6 @@ class OBJ_IO {
       int vtIndex = 1;
       string currentObjName = "loose";
       string currentObjMtlName;
-      string faceTerm; // "v1/" or "v1/vt1" (TODO: or "v1/vt1/vn1", or "v1//vn1")
-      std::string* tokens; // e.g. "v1" and "vt1" from "v1/vt1"
 
       ifstream inFile;
       inFile.open(filename);
@@ -181,8 +178,8 @@ class OBJ_IO {
           // Do I actually need this?
           //structure.allFaces.push_back(face);
 
-          // I definitely need this. TODO: uncomment
-          //structure.faceDict.insert({currentObjName, face});
+          // I definitely need this.
+          structure.faceDict.insert({currentObjName, face});
         }
         else if (linePrefix == "o") {
           lineStream >> currentObjName;
