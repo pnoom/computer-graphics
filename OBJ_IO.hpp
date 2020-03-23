@@ -53,57 +53,26 @@ class OBJ_IO {
       return (lineString.empty() || lineString.front() == '#');
     }
 
-    // Be sure to add parameters as needed
     faceData processFaceLine(istringstream& lineStream) {
-      istringstream faceTermStream;
-      string faceTerm, subTerm;
+      string faceTerm;
+      int numRead;
       vec3_int vindices;
       vec3_int tindices;
-      vec3_int nindices;
-      bool vts, vns;
+      // vec3_int nindices;
+      bool vts = true;
       faceData face;
       int i = 0;
-      // Repeatedly get "v1/vt1" or similar, then parse /-delimited ints
+
+      // Repeatedly get "v1/vt1/vn1" or similar, then parse /-delimited ints.
+      // Ignore vector normals for now.
       while (lineStream >> faceTerm) {
-        faceTermStream = istringstream(faceTerm);
-        // Get string of first subTerm
-        getline(faceTermStream, subTerm, '/');
-        vindices[i] = stoi(subTerm, NULL);
-
-        // Get string of second subTerm. May fail if faceTerm like "v1/",
-        // or have length zero if like "v1//vn1"
-        getline(faceTermStream, subTerm, '/');
-        // TODO: check that these conditionals behave as intended
-        if (faceTermStream.fail()) {
-          vts = false;
-          vns = false;
-          continue;
-        }
-        else if (subTerm.size() == 0) {
-          vts = false;
-          // Get third subTerm (everything up till newline). May fail if
-          // faceTerm like "v1/" or "v1/vt1"
-          getline(faceTermStream, subTerm);
-          nindices[i] = stoi(subTerm, NULL);
-          continue;
-        }
-        else {
-          vts = true;
-          tindices[i] = stoi(subTerm, NULL);
-        }
-        
-        // Get third subTerm (everything up till end of line)
-        getline(faceTermStream, subTerm);
-        if (faceTermStream.fail() || )
-        nindices[i] = stoi(subTerm, NULL);
+        numRead = sscanf(faceTerm.c_str(), "%d/%d", &vindices[i], &tindices[i]); // nindices[i]
+        if (numRead == 1) vts = false;
       }
-
-        //d = stoi(tokens[0], NULL);
-        //e = stoi(tokens[1], NULL);
-        //vindices[0] = d;
-        //tindices[0] = e;
-        //lineStream >> vindices[0] >> vindices[1] >> vindices[2];
-      //face = make_tuple(vindices, tindices); // this should copy these arrays from the temp variables
+      if (vts)
+        face = make_tuple(vindices, tindices, nullopt);
+      else
+        face = make_tuple(vindices, nullopt, nullopt);
       return face;
     }
 
