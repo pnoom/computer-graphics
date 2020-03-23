@@ -395,43 +395,41 @@ Colour getAdjustedColour(RayTriangleIntersection intersection) {
 // High Level Functions
 // ---
 void drawGeometryViaRayTracing() {
+  mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
+
   for (int j=0; j<HEIGHT; j++) {
     for (int i=0; i<WIDTH; i++) {
       // Note: the sign of the y value here is flipped
       //    in pixelRay and adjOrientation
       //    to ensure continuity between raytracer and rasteriser
 
-      //glm::vec3 pixelRay(i - WIDTH/2, -j + HEIGHT/2, camera.focalLength);
-      mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
-      //pixelRay = pixelRay * adjOrientation;
+      int x =  i - WIDTH / 2;
+      int y = -j + HEIGHT / 2;
 
-      glm::vec3 pr_1 = glm::vec3(i - WIDTH/2 - 0.25f, -j + HEIGHT/2 - 0.25f, camera.focalLength) * adjOrientation;
-      glm::vec3 pr_2 = glm::vec3(i - WIDTH/2 - 0.25f, -j + HEIGHT/2 + 0.25f, camera.focalLength) * adjOrientation;
-      glm::vec3 pr_3 = glm::vec3(i - WIDTH/2 + 0.25f, -j + HEIGHT/2 - 0.25f, camera.focalLength) * adjOrientation;
-      glm::vec3 pr_4 = glm::vec3(i - WIDTH/2 + 0.25f, -j + HEIGHT/2 + 0.25f, camera.focalLength) * adjOrientation;
+      glm::vec3 pixelray_1 = glm::vec3(x - 0.25f, y - 0.25f, camera.focalLength);
+      glm::vec3 pixelray_2 = glm::vec3(x - 0.25f, y + 0.25f, camera.focalLength);
+      glm::vec3 pixelray_3 = glm::vec3(x + 0.25f, y - 0.25f, camera.focalLength);
+      glm::vec3 pixelray_4 = glm::vec3(x + 0.25f, y + 0.25f, camera.focalLength);
 
-      //RayTriangleIntersection intersection = getClosestIntersection(pixelRay);
+      glm::vec3 subPixelRays[4] = { pixelray_1, pixelray_2, pixelray_3, pixelray_4 };
 
-      RayTriangleIntersection iss[4] = { getClosestIntersection(pr_1),
-                                          getClosestIntersection(pr_2),
-                                          getClosestIntersection(pr_3),
-                                          getClosestIntersection(pr_4) };
-      int AA_red = 0;
-      int AA_green = 0;
-      int AA_blue = 0;
+      int AA_red = 0, AA_green = 0, AA_blue = 0;
 
       for (int i = 0; i < 4; i++) {
-        if (iss[i].isSolution) {
-          Colour adjustedColour = getAdjustedColour(iss[i]);
-          //uint32_t colour = get_rgb(adjustedColour);
+
+        subPixelRays[i] = subPixelRays[i] * adjOrientation;
+        RayTriangleIntersection subPixel_RTI = getClosestIntersection(subPixelRays[i]);
+
+        if (subPixel_RTI.isSolution) {
+          Colour adjustedColour = getAdjustedColour(subPixel_RTI);
 
           AA_red += adjustedColour.red;
           AA_green += adjustedColour.green;
           AA_blue += adjustedColour.blue;
         }
       }
+
       Colour AA_res((AA_red / 4), (AA_green / 4), (AA_blue / 4));
-      //Colour AA_res(round(AA_red / 4), round(AA_green / 4), round(AA_blue / 4));
       window.setPixelColour(i, j, get_rgb(AA_res));
     }
   }
