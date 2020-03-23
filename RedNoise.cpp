@@ -34,16 +34,18 @@ Colour BLACK = Colour(0, 0, 0);
 
 typedef enum {WIRE, RASTER, RAY} View_mode;
 
-// Global Object Instantiations
+// Global Object Declarations
 // ---
-DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 
-// Texture the_image("cobbles.ppm");
-DepthBuffer depthbuf(WIDTH, HEIGHT);
+OBJ_IO obj_io;
+std::vector<GObject> gobjects;
+DrawingWindow window;
+
+Texture the_image;
+DepthBuffer depthbuf;
 Camera camera;
 View_mode current_mode = WIRE;
-OBJ_IO obj_io;
-std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
+
 vec3 lightPos(250.0f, 470.0f, 120.0f);
 //vec3 lightPos(250.0f, 400.0f, 200.0f);
 float lightIntensity = 2000.0f;
@@ -538,6 +540,19 @@ void handleEvent(SDL_Event event) {
 }
 
 int main(int argc, char* argv[]) {
+  // Initialise globals here, not at top of file, because there, statements
+  // are not allowed (so no print statements, or anything, basically)
+  gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
+  //std::vector<GObject> gobjects = obj_io.loadOBJ("logo.obj", WIDTH);
+
+  // TODO: remove
+  cout << "Abort before running SDL." << endl;
+  exit(1);
+
+  window = DrawingWindow(WIDTH, HEIGHT, false);
+  depthbuf = DepthBuffer(WIDTH, HEIGHT);
+  the_image = Texture("cobbles.ppm");
+
   SDL_Event event;
 
   draw();

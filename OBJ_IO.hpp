@@ -94,6 +94,8 @@ class OBJ_IO {
         }
       }
       inFile.close();
+      cout << "textureFilename" << textureFilename << endl;
+      //cout << "mtlDict" << mtlDict << endl;
       return make_tuple(mtlDict, textureFilename);
     }
 
@@ -128,6 +130,7 @@ class OBJ_IO {
         lineStream >> linePrefix;
         if (linePrefix == "mtllib") {
           lineStream >> structure.mtlLibFileName;
+          // TODO: check which of these is empty, if any, and do sth appropriate
           tie(structure.mtlDict, structure.textureFilename) = loadMTL(structure.mtlLibFileName);
         }
         else if (linePrefix == "v") {

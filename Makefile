@@ -23,7 +23,7 @@ SDL_COMPILER_FLAGS := $(shell sdl2-config --cflags)
 SDL_LINKER_FLAGS := $(shell sdl2-config --libs)
 SDW_LINKER_FLAGS := $(WINDOW_OBJECT)
 
-default: debug
+default: speedy
 
 # Rule to help find errors (when you get a segmentation fault)
 diagnostic: window
