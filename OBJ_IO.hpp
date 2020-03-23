@@ -52,9 +52,12 @@ class OBJ_IO {
 
     // Don't bother having an MTL_Structure class, just use a tuple
     tuple<materialDict, string> loadMTL(string filename) {
-      // Declarations of stuff we want to parse from (string) input streams
+      // Return values
       materialDict mtlDict;
-      string textureFilename, mtlName;
+      string textureFilename;
+
+      // Temp vars
+      string mtlName;
       float r, g, b;
       Colour colour;
 
@@ -93,15 +96,22 @@ class OBJ_IO {
     }
 
     vector<GObject> loadOBJpass1(string filename) {
+      // Store all intermediate stuff in here. Use it to build a vector of
+      // gobjects.
       OBJ_Structure structure();
 
+      // Temp vars
       float a, b, c;
       vec3 vertex;
-      //gobjects.push_back();
+      vec2 textureVertex;
+      faceData face;
       int vIndex = 1;
       int vtIndex = 1;
+      string currentObjName = "loose";
+      string currentObjMtlName;
+      vec3_int vindices;
+      vec3_int tindices;
 
-      // File IO
       ifstream inFile;
       inFile.open(filename);
       if (inFile.fail()) {
@@ -115,23 +125,41 @@ class OBJ_IO {
         istringstream lineStream(lineString);
         lineStream >> linePrefix;
         if (linePrefix == "mtllib") {
-          lineStream >> mtlLibFileName;
-          tie(mtlDict, textureFilename) = loadMTL(mtlLibFileName);
+          lineStream >> structure.mtlLibFileName;
+          tie(structure.mtlDict, structure.textureFilename) = loadMTL(structure.mtlLibFileName);
         }
         else if (linePrefix == "v") {
           lineStream >> a >> b >> c;
           vertex[0] = a;
           vertex[1] = b;
           vertex[2] = c;
-          vertices.push_back(vertex);
+          structure.allVertices.push_back(vertex);
+          structure.vertexDict.insert({currentObjName, vIndex});
+          vIndex += 1;
+        }
+        else if (linePrefix == "vt") {
+          lineStream >> a >> b;
+          textureVertex[0] = a;
+          textureVertex[1] = b;
+          structure.allTextureVertices.push_back(textureVertex);
+          structure.textureVertexDict.insert({currentObjName, vtIndex});
+          vtIndex += 1;
+        }
+        else if (linePrefix == "f") {
+          // TODO: deal with the / delimiter and optional texture vertex logic
+          //lineStream >> indices[0] >> indices[1] >> indices[2];
+          face = make_tuple(indices, tindices); // this should copy these arrays from the temp variables
+          // Do I actually need this?
+          //structure.allFaces.push_back(face);
+          structure.faceDict.insert({currentObjName, face});
         }
         else if (linePrefix == "o") {
-          lineStream >> objName;
+          lineStream >> currentObjName;
           skipToNextLine(inFile);
           lineStream >> linePrefix;
           if (linePrefix == "usemtl") {
-            lineStream >> objMtlName;
-            mtlDict.insert({mtlName, Colour(mtlName, round(255*r), round(255*g), round(255*b)});
+            lineStream >> currentObjMtlName;
+            mtlDict.insert({mtlName, Colour(currentObjMtlName, round(255*r), round(255*g), round(255*b)});
           }
           else {
             cout << "Line after 'o' line should be 'usemtl materialName'." << endl;
