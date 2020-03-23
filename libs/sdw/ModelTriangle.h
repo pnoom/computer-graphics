@@ -1,12 +1,22 @@
 #include <glm/glm.hpp>
 #include "Colour.h"
 #include <string>
+#include <optional>
+// #include "TextureTriangle.hpp"
 
 class ModelTriangle
 {
   public:
     glm::vec3 vertices[3];
     Colour colour;
+    // This value will only exist for some ModelTriangles
+    optional<TextureTriangle> maybeTextureTriangle;
+    // If this ModelTriangle does not have a TextureTriangle, this vector
+    // will always be empty.
+    // Otherwise, it will be empty until we calculate the exact TexturePoints
+    // needed. (Actually, consider not storing these at all: just calculate and
+    // draw directly to screen).
+    // vector<TexturePoint> texturePoints;
 
     ModelTriangle()
     {
