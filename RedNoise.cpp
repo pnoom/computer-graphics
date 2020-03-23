@@ -17,6 +17,7 @@
 #include "OBJ_IO.hpp"
 #include "Camera.hpp"
 #include "DepthBuffer.hpp"
+#include "Light.hpp"
 
 using namespace std;
 using namespace glm;
@@ -43,11 +44,9 @@ DepthBuffer depthbuf(WIDTH, HEIGHT);
 Camera camera;
 View_mode current_mode = WIRE;
 OBJ_IO obj_io;
+Light light;
 std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
-vec3 lightPos(250.0f, 470.0f, 120.0f);
-//vec3 lightPos(250.0f, 400.0f, 200.0f);
-float lightIntensity = 2000.0f;
-float lightSpread = 4.0f;
+
 int number_of_AA_samples = 4;
 
 // Simple Helper Functions
@@ -336,7 +335,7 @@ float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
   glm::vec3 norm_1 = glm::normalize(glm::cross((triangle.vertices[2] - triangle.vertices[0]), (triangle.vertices[1] - triangle.vertices[0])));
   glm::vec3 norm_2 = glm::normalize(glm::cross((triangle.vertices[1] - triangle.vertices[0]), (triangle.vertices[2] - triangle.vertices[0])));
 
-  glm::vec3 point_to_light = -lightPos + point;
+  glm::vec3 point_to_light = -light.Position + point;
   point_to_light = glm::normalize(point_to_light);
 
   float AOI = glm::dot(norm_1, point_to_light);
@@ -346,19 +345,13 @@ float getAngleOfIncidence(glm::vec3 point, ModelTriangle triangle) {
   return AOI;
 }
 
-float getIntensity(glm::vec3 point) {
-  glm::vec3 point_to_light = -lightPos + point;
-  float intensity =  lightIntensity / (lightSpread * M_PI * glm::length(point_to_light));
-  return intensity;
-}
-
 bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
-  glm::vec3 rayDir = -lightPos + point;
+  glm::vec3 rayDir = -light.Position + point;
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
       if (!compareTriangles(self, triangle)) {
-        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, lightPos, true);
+        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, light.Position, true);
         if (intersection.isSolution) {
           if (intersection.distanceFromPoint < glm::length(rayDir)) {
             return true;
@@ -374,7 +367,7 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
 Colour getAdjustedColour(RayTriangleIntersection intersection) {
   Colour inputColour = intersection.intersectedTriangle.colour;
   float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
-  float intensity = getIntensity(intersection.intersectionPoint);
+  float intensity = light.getIntensityAtPoint(intersection.intersectionPoint);
   bool pointInShadow = isPointInShadow(intersection.intersectionPoint, intersection.intersectedTriangle);
 
   Colour res;
@@ -447,7 +440,7 @@ void drawGeometry(bool filled) {
     }
   }
 
-  CanvasPoint lightCP = projectVertexInto2D(lightPos);
+  CanvasPoint lightCP = projectVertexInto2D(light.Position);
   window.setPixelColour(lightCP.x, lightCP.y, get_rgb(BLACK));
 }
 
@@ -562,7 +555,7 @@ int main(int argc, char* argv[]) {
   draw();
   camera.printCamera();
   std::cout << "LIGHT position:\n";
-  printVec3(lightPos);
+  printVec3(light.Position);
 
   while(true) {
     if(window.pollForInputEvents(&event)) handleEvent(event);
