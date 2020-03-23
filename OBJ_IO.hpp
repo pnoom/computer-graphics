@@ -83,7 +83,7 @@ class OBJ_IO {
           lineStream >> linePrefix;
           if (linePrefix == "Kd") {
             lineStream >> r >> g >> b;
-            mtlDict.insert({mtlName, Colour(mtlName, round(255*r), round(255*g), round(255*b)});
+            mtlDict.insert({mtlName, Colour(mtlName, round(255*r), round(255*g), round(255*b))});
           }
           else {
             cout << "Line after 'newmtl' should be 'Kd r g b'." << endl;
@@ -159,7 +159,7 @@ class OBJ_IO {
           lineStream >> linePrefix;
           if (linePrefix == "usemtl") {
             lineStream >> currentObjMtlName;
-            mtlDict.insert({mtlName, Colour(currentObjMtlName, round(255*r), round(255*g), round(255*b)});
+            mtlDict.insert({mtlName, Colour(currentObjMtlName, round(255*r), round(255*g), round(255*b))});
           }
           else {
             cout << "Line after 'o' line should be 'usemtl materialName'." << endl;
