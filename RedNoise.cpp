@@ -400,12 +400,16 @@ void drawGeometryViaRayTracing() {
       int x =  i - WIDTH / 2;
       int y = -j + HEIGHT / 2;
 
-      glm::vec3 pixelray_1 = glm::vec3(x - 0.25f, y - 0.25f, camera.focalLength);
-      glm::vec3 pixelray_2 = glm::vec3(x - 0.25f, y + 0.25f, camera.focalLength);
-      glm::vec3 pixelray_3 = glm::vec3(x + 0.25f, y - 0.25f, camera.focalLength);
-      glm::vec3 pixelray_4 = glm::vec3(x + 0.25f, y + 0.25f, camera.focalLength);
+      glm::vec3 subPixelRays[4];
+      for (int i = 0; i < number_of_AA_samples; i++) {
+        float x_Offset = 0.25f;
+        float y_Offset = 0.25f;
+        if (modulo(i, 2) == 0) x_Offset *= -1;
+        if (i >= 2) y_Offset *= -1;
 
-      glm::vec3 subPixelRays[4] = { pixelray_1, pixelray_2, pixelray_3, pixelray_4 };
+        glm::vec3 pr = glm::vec3(x - x_Offset, y - y_Offset, camera.focalLength);
+        subPixelRays[i] = pr;
+      }
 
       int AA_red = 0, AA_green = 0, AA_blue = 0;
 
