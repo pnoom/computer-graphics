@@ -48,6 +48,7 @@ vec3 lightPos(250.0f, 470.0f, 120.0f);
 //vec3 lightPos(250.0f, 400.0f, 200.0f);
 float lightIntensity = 2000.0f;
 float lightSpread = 4.0f;
+int number_of_AA_samples = 4;
 
 // Simple Helper Functions
 // ---
@@ -415,22 +416,24 @@ void drawGeometryViaRayTracing() {
 
       int AA_red = 0, AA_green = 0, AA_blue = 0;
 
-      for (int i = 0; i < 4; i++) {
-
+      for (int i = 0; i < number_of_AA_samples; i++) {
         subPixelRays[i] = subPixelRays[i] * adjOrientation;
         RayTriangleIntersection subPixel_RTI = getClosestIntersection(subPixelRays[i]);
 
         if (subPixel_RTI.isSolution) {
           Colour adjustedColour = getAdjustedColour(subPixel_RTI);
-
           AA_red += adjustedColour.red;
           AA_green += adjustedColour.green;
           AA_blue += adjustedColour.blue;
         }
       }
 
-      Colour AA_res((AA_red / 4), (AA_green / 4), (AA_blue / 4));
-      window.setPixelColour(i, j, get_rgb(AA_res));
+      uint8_t avg_red = AA_red / number_of_AA_samples;
+      uint8_t avg_green = AA_green / number_of_AA_samples;
+      uint8_t avg_blue = AA_blue / number_of_AA_samples;
+      uint32_t avg_colour = (avg_red << 16) + (avg_green << 8) + (avg_blue);
+
+      window.setPixelColour(i, j, avg_colour);
     }
   }
 }
