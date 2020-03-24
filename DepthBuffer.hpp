@@ -5,6 +5,8 @@ class DepthBuffer {
     double* depthbuf;
     int width, height;
 
+    DepthBuffer() {}
+    
     DepthBuffer(int w, int h){
       width = w;
       height = h;

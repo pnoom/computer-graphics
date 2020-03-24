@@ -1,9 +1,13 @@
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
+#include <tuple>
+#include <optional>
+#include "OBJ_Structure.hpp"
 
 using namespace std;
 using namespace glm;
@@ -12,26 +16,32 @@ class OBJ_IO {
   public:
     OBJ_IO () {}
 
-    std::vector<GObject> loadOBJ(string filename, int WIDTH) {
-      std::vector<GObject> res = loadOBJpass1(filename);
-      res = scale(WIDTH, res);
+    // For clarity: each ModelTriangle (a triangle in 3D space) may get their
+    // "filling" from a TextureTriangle (a triangle in 2D space).
+
+    // Pass 1:
+    // First process included .mtl files (build dictionary of materials and/or
+    // get the filename of the texture file.) Then go through whole file and:
+    // Store all vertices and texture coords in two vectors. (Can't do faces yet
+    // since they use global indices for vertices.) (Actually, we CAN, if we
+    // just store the indices for now. Then, in second pass, we can build them.
+    // The second pass is needed mainly for the "named object" stuff.)
+
+    // Pass 2:
+    // Go through whole file again (tracking the indices of vertices, texture
+    // points and faces):
+    // If no named object (e.g. light, back_wall) has been introduced,
+    // associate the current indices with an extra object called "loose".
+    // Otherwise, between named object intros: associate the current indices
+    // with the current named object.
+    // Finally, go through the intermediate structures representing these named
+    // objects, building gobjects (first ModelTriangles)
+    vector<GObject> loadOBJ(string filename) {
+      vector<GObject> res;
+      OBJ_Structure structure = loadOBJpass1(filename);
+      //cout << structure << endl;
+      res = structure.toGObjects();
       return res;
-    }
-
-  private:
-    bool isemptyline(char* line) {
-      return line[0] == '\n';
-    }
-
-    float maxComponent(glm::vec3 v) {
-      float greatest = std::max(std::max(v[0], v[1]), v[2]);
-      return greatest;
-    }
-
-    // potentially most negative
-    float minComponent(glm::vec3 v) {
-      float smallest = std::min(std::min(v[0], v[1]), v[2]);
-      return smallest;
     }
 
     std::vector<GObject> scale(int WIDTH, std::vector<GObject> gobjects) {
@@ -39,7 +49,7 @@ class OBJ_IO {
       for (uint j=0; j<gobjects.size(); j++) {
         for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
           for (int k=0; k<3; k++) {
-	    float smallest = minComponent(gobjects.at(j).faces.at(i).vertices[k]);
+            float smallest = minComponent(gobjects.at(j).faces.at(i).vertices[k]);
             if (smallest < currentMinComponent) currentMinComponent = smallest;
           }
         }
@@ -53,19 +63,19 @@ class OBJ_IO {
           for (int k=0; k<3; k++) {
             glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
             v[0] += addFactor;
-	    v[1] += addFactor;
-	    v[2] += addFactor;
+            v[1] += addFactor;
+            v[2] += addFactor;
             gobjects.at(j).faces.at(i).vertices[k] = v;
             // std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
           }
-	}
+        }
       }
 
       float currentMaxComponent = -std::numeric_limits<float>::infinity();
       for (uint j=0; j<gobjects.size(); j++) {
         for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
           for (int k=0; k<3; k++) {
-	    float greatest = maxComponent(gobjects.at(j).faces.at(i).vertices[k]);
+            float greatest = maxComponent(gobjects.at(j).faces.at(i).vertices[k]);
             if (greatest > currentMaxComponent) currentMaxComponent = greatest;
           }
         }
@@ -94,185 +104,155 @@ class OBJ_IO {
       return gobjects;
     }
 
-    unordered_map<string, Colour> loadMTL(string filename) {
-      FILE* f = fopen(filename.c_str(), "r");
-      int bufsize = 200;
-      char buf[bufsize];
-      std::string* tokens;
-      unordered_map<string, Colour> materials;
-
-      if (f == NULL) {
-        std::cout << "Could not open file." << '\n';
-        exit(1);
-      }
-
-      string matName;
-      float rgb[3];
-
-      while (!feof(f)) {
-        fgets(buf, bufsize, f);
-        if (isemptyline(buf)) continue;
-        tokens = split(buf, ' ');
-        //std::cout << "tokens[0]" << tokens[0] << '\n';
-        if (tokens[0] == "newmtl") {
-          matName = tokens[1];
-	  matName.erase(matName.end() - 1, matName.end());
-          fgets(buf, bufsize, f);
-          tokens = split(buf, ' ');
-          if (tokens[0] != "Kd") {
-            std::cout << "Line after 'newmtl' should be 'Kd r g b'" << '\n';
-            exit(1);
-          }
-          else {
-            size_t stof_thing;
-            for (int i=0; i<3; i++) {
-              rgb[i] = stof(tokens[i+1], &stof_thing);
-            }
-            Colour col(matName, round(255*rgb[0]), round(255*rgb[1]), round(255*rgb[2]));
-            //materials[matName] = col;
-	    materials.insert({matName, col});
-	    //std::cout << "matName: '" << matName << "'\n";
-          }
-        }
-      }
-      fclose(f);
-      return materials;
+  private:
+    void skipToNextLine(ifstream& inFile) {
+      inFile.ignore(numeric_limits<int>::max(), '\n');
     }
 
-    std::vector<GObject> loadOBJpass2(string filename,
-    				  unordered_map<string, Colour> mtls,
-    					 std::vector<glm::vec3> vertices,
-    					 unordered_map<string, std::vector<glm::uint>> objects,
-    					 unordered_map<string, string> object_mtl_map) {
-      FILE* f = fopen(filename.c_str(), "r");
-      int bufsize = 200;
-      char buf[bufsize];
-      std::string* tokens;
-      std::vector<ModelTriangle> faces;
-      std::vector<GObject> result;
+    bool emptyOrCommentLine(string lineString) {
+      return (lineString.empty() || lineString.front() == '#');
+    }
+
+    faceData processFaceLine(istringstream& lineStream) {
+      string faceTerm;
+      int numRead;
+      vec3_int vindices;
+      vec3_int tindices;
+      // vec3_int nindices;
+      bool vts = true;
+      faceData face;
+      int i = 0;
+
+      // Repeatedly get "v1/vt1/vn1" or similar, then parse /-delimited ints.
+      // Ignore vector normals for now.
+      while (lineStream >> faceTerm) {
+        numRead = sscanf(faceTerm.c_str(), "%d/%d", &vindices[i], &tindices[i]); // nindices[i]
+        if (numRead == 1) vts = false;
+        i += 1;
+      }
+      // Don't forget to subtract one from all the indices, since OBJ files use
+      // 1-based indices
+      for (int i=0; i<(int)vindices.size(); i++) vindices[i] -= 1;
+      if (vts) {
+        for (int i=0; i<(int)tindices.size(); i++) tindices[i] -= 1;
+        face = make_tuple(vindices, tindices, nullopt);
+      }
+      else {
+        face = make_tuple(vindices, nullopt, nullopt);
+      }
+      return face;
+    }
+
+    // Don't bother having an MTL_Structure class, just use a tuple
+    tuple<materialDict, string> loadMTL(string filename) {
+      // Return values
+      materialDict mtlDict;
+      string textureFilename;
+
+      // Temp vars
+      string mtlName;
+      float r, g, b;
       Colour colour;
-      std::string object_name;
 
-      if (f == NULL) {
-        std::cout << "Could not open file." << '\n';
+      ifstream inFile;
+      inFile.open(filename);
+      if (inFile.fail()) {
+        cout << "File not found." << endl;
         exit(1);
       }
 
-      //std::cout << "Starting 2nd pass" << '\n';
+      string lineString, linePrefix;
 
-      while (!feof(f)) {
-        fgets(buf, bufsize, f);
-        if (isemptyline(buf)) continue;
-        tokens = split(buf, ' ');
-
-        if (tokens[0] == "o") {
-          object_name = tokens[1];
-          object_name.erase(object_name.end() - 1, object_name.end());
-
-          colour = mtls[object_mtl_map[object_name]];
-
-          while(!feof(f) && !isemptyline(buf)) {
-    	if (tokens[0] == "f") {
-    	  uint vindices[3];
-    	  for (int i=1; i<=3; i++) {
-    	    sscanf(tokens[i].c_str(), "%d/", &vindices[i-1]);
-    	  }
-    	  faces.push_back(ModelTriangle(vertices.at(vindices[0]-1),
-    					vertices.at(vindices[1]-1),
-    					vertices.at(vindices[2]-1), colour));
-    	}
-    	fgets(buf, bufsize, f);
-            tokens = split(buf, ' ');
-          }
-          result.push_back(GObject(object_name, colour, faces));
-          //std::cout << "faces.size() " << faces.size() << '\n';
-          faces.clear();
-
+      while (getline(inFile, lineString)) {
+        if (emptyOrCommentLine(lineString)) continue;
+        istringstream lineStream(lineString);
+        lineStream >> linePrefix; // use this as the conditional in an if stmt to detect failure if needed
+        if (linePrefix == "map_Kd") {
+          lineStream >> textureFilename;
+        }
+        else if (linePrefix == "newmtl") {
+          lineStream >> mtlName;
+        }
+        // Assumes a "newmtl" line has come before, initialising mtlName
+        else if (linePrefix == "Kd") {
+          lineStream >> r >> g >> b;
+          mtlDict.insert({mtlName, Colour(mtlName, round(255*r), round(255*g), round(255*b))});
         }
       }
-      fclose(f);
-      //std::cout << "result.size() " << result.size() << '\n';
-      return result;
+      inFile.close();
+      return make_tuple(mtlDict, textureFilename);
     }
 
-    std::vector<GObject> loadOBJpass1(string filename) {
-      FILE* f = fopen(filename.c_str(), "r");
-      int bufsize = 200;
-      char buf[bufsize];
-      std::string* tokens;
+    OBJ_Structure loadOBJpass1(string filename) {
+      // Store all intermediate stuff in here. Use it to build a vector of
+      // gobjects.
+      OBJ_Structure structure;
 
-      if (f == NULL) {
-        std::cout << "Could not open file." << '\n';
+      // Temp vars
+      float a, b, c;
+      vec3 vertex;
+      vec2 textureVertex;
+      faceData face;
+      string currentObjName = "loose";
+      string currentObjMtlName;
+
+      ifstream inFile;
+      inFile.open(filename);
+      if (inFile.fail()) {
+        cout << "File not found." << endl;
         exit(1);
       }
+      string lineString, linePrefix;
 
-      unordered_map<string, Colour> mtls;
-
-      std::vector<glm::vec3> vertices;
-      unordered_map<string, std::vector<glm::uint>> objects;
-      unordered_map<string, string> object_mtl_map;
-
-      string object_name, mtl_name;
-      while (!feof(f)) {
-        fgets(buf, bufsize, f);
-        if (isemptyline(buf)) continue;
-        tokens = split(buf, ' ');
-
-        if (tokens[0] == "mtllib") {
-          string mtllib_name = tokens[1];
-          mtllib_name.erase(mtllib_name.end() - 1, mtllib_name.end());
-          mtls = loadMTL(mtllib_name);
+      while (getline(inFile, lineString)) {
+        if (emptyOrCommentLine(lineString)) continue;
+        istringstream lineStream(lineString);
+        lineStream >> linePrefix;
+        //cout << "linePrefix '" << linePrefix << "'" << endl;
+        if (linePrefix == "mtllib") {
+          // cout << "This should only appear once" << endl;
+          lineStream >> structure.mtlLibFileName;
+          // TODO: check which of these is empty, if any, and do sth appropriate
+          tie(structure.mtlDict, structure.textureFilename) = loadMTL(structure.mtlLibFileName);
         }
-        else if (tokens[0] == "o") {
-          object_name = tokens[1];
-          object_name.erase(object_name.end() - 1, object_name.end());
-          //std::cout << "o: " << object_name << '\n';
-          objects[object_name] = std::vector<glm::uint>();
-
-          fgets(buf, bufsize, f);
-          tokens = split(buf, ' ');
-
-          if (tokens[0] != "usemtl") {
-            //std::cout << "Object " << object_name << " has no associated material." << '\n';
-            exit(1);
-          }
-
-          mtl_name = tokens[1];
-          mtl_name.erase(mtl_name.end() - 1, mtl_name.end());
-	  // std::cout << "mtl_name: '" << mtl_name << "'\n";
-
-          object_mtl_map.insert({object_name, mtl_name});
-	  //std::cout << "colour: " << mtls[mtl_name] << '\n';
-
-          fgets(buf, bufsize, f);
-          tokens = split(buf, ' ');
-
-          while(!feof(f) && !isemptyline(buf)) {
-    	if (tokens[0] == "v") {
-    	  float vec3_parts[3];
-    	  size_t stof_thing;
-    	  for (int i = 0; i < 3; i++) {
-    	    vec3_parts[i] = stof(tokens[i+1], &stof_thing);
-    	  }
-    	  glm::vec3 v(vec3_parts[0], vec3_parts[1], vec3_parts[2]);
-    	  //std::cout << "vertex: " << v[0] << " " << v[1] << " " << v[2] << '\n';
-    	  vertices.push_back(v);
-    	  objects[object_name].push_back(vertices.size());
-    	}
-    	  fgets(buf, bufsize, f);
-    	  tokens = split(buf, ' ');
-          }
-          //std::cout << "Object " << object_name << " has " << objects[object_name].size() << " vertices, with material " << object_mtl_map[object_name] << "\n";
+        else if (linePrefix == "v") {
+          lineStream >> a >> b >> c;
+          vertex[0] = a;
+          vertex[1] = b;
+          vertex[2] = c;
+          structure.allVertices.push_back(vertex);
+        }
+        else if (linePrefix == "vt") {
+          lineStream >> a >> b;
+          textureVertex[0] = a;
+          textureVertex[1] = b;
+          structure.allTextureVertices.push_back(textureVertex);
+        }
+        else if (linePrefix == "f") {
+          face = processFaceLine(lineStream);
+          structure.faceDict.insert({currentObjName, face});
+        }
+        else if (linePrefix == "o") {
+          lineStream >> currentObjName;
+        }
+        // Assumes an "o" line has come before it, initialising currentObjName
+        else if (linePrefix == "usemtl") {
+            lineStream >> currentObjMtlName;
+            structure.objMatNameDict.insert({currentObjName, currentObjMtlName});
         }
       }
-      fclose(f);
+      inFile.close();
+      return structure;
+    }
 
-      //std::cout << "First pass complete" << "\n";
+    float maxComponent(glm::vec3 v) {
+      float greatest = std::max(std::max(v[0], v[1]), v[2]);
+      return greatest;
+    }
 
-      //TODO: vertices and faces can come in any order; this code is too strict on ordering!
-      //      -> move the while(tokens[0] == "v") {...} logic out of following an object or smth
-
-      std::vector<GObject> gobjects = loadOBJpass2(filename, mtls, vertices, objects, object_mtl_map);
-      return gobjects;
+    // potentially most negative
+    float minComponent(glm::vec3 v) {
+      float smallest = std::min(std::min(v[0], v[1]), v[2]);
+      return smallest;
     }
 };

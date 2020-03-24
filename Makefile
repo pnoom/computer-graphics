@@ -9,7 +9,7 @@ WINDOW_OBJECT = libs/sdw/DrawingWindow.o
 
 # Build settings
 COMPILER = g++
-COMPILER_OPTIONS = -c -pipe -Wall -std=c++11
+COMPILER_OPTIONS = -c -pipe -Wall -std=c++17
 DEBUG_OPTIONS = -ggdb -g3
 FUSSY_OPTIONS = -pedantic
 SANITIZER_OPTIONS = -O1 -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer
@@ -23,7 +23,7 @@ SDL_COMPILER_FLAGS := $(shell sdl2-config --cflags)
 SDL_LINKER_FLAGS := $(shell sdl2-config --libs)
 SDW_LINKER_FLAGS := $(WINDOW_OBJECT)
 
-default: debug
+default: speedy
 
 # Rule to help find errors (when you get a segmentation fault)
 diagnostic: window
@@ -41,7 +41,7 @@ production: window
 debug: window
 	$(COMPILER) $(COMPILER_OPTIONS) $(DEBUG_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS) $(GLM_COMPILER_FLAGS)
 	$(COMPILER) $(LINKER_OPTIONS) $(DEBUG_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
-	./$(EXECUTABLE)
+	# ./$(EXECUTABLE)
 
 # Rule to build for high performance executable
 speedy: window

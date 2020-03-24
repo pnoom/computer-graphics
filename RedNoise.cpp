@@ -35,12 +35,15 @@ Colour BLACK = Colour(0, 0, 0);
 
 typedef enum {WIRE, RASTER, RAY} View_mode;
 
-// Global Object Instantiations
+// Global Object Declarations
 // ---
-DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 
-Texture the_image("cobbles.ppm");
-DepthBuffer depthbuf(WIDTH, HEIGHT);
+OBJ_IO obj_io;
+std::vector<GObject> gobjects;
+DrawingWindow window;
+
+Texture the_image;
+DepthBuffer depthbuf;
 Camera camera;
 View_mode current_mode = WIRE;
 OBJ_IO obj_io;
@@ -129,9 +132,9 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   }
 }
 
-uint32_t get_textured_pixel(TexturePoint texturePoint) {
-  return the_image.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image.width))];
-}
+//uint32_t get_textured_pixel(TexturePoint texturePoint) {
+//  return the_image.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image.width))];
+//}
 
 void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
@@ -140,8 +143,8 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    uint32_t colour = get_textured_pixel(pixel.texturePoint);
-    //uint32_t colour = 0;
+    //uint32_t colour = get_textured_pixel(pixel.texturePoint);
+    uint32_t colour = 0;
     window.setPixelColour(round(x), round(y), colour);
   }
 }
@@ -558,7 +561,47 @@ void handleEvent(SDL_Event event) {
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
 
+// For some reason, all the ways to "append" or "copy" vectors in C++ yield an
+// iterator, not a vector, which is no good. So we have to roll our own,
+// inefficient verson.
+vector<GObject> joinGObjectVectors(vector<GObject> gobjects1, vector<GObject> gobjects2) {
+  vector<GObject> result;
+  for (auto g=gobjects1.begin(); g != gobjects1.end(); g++) {
+    result.push_back(*g);
+  }
+  for (auto g=gobjects2.begin(); g != gobjects2.end(); g++) {
+    result.push_back(*g);
+  }
+  return result;
+}
+
 int main(int argc, char* argv[]) {
+  // Initialise globals here, not at top of file, because there, statements
+  // are not allowed (so no print statements, or anything, basically)
+  vector<GObject> cornell;
+  vector<GObject> logo;
+  // Could move call to scale() back into OBJ_Structure, but wanted to see what
+  // happens if everything was scaled at once (answer: only logo is visible, not
+  // box).
+  cornell = obj_io.loadOBJ("cornell-box.obj");
+  cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
+  logo = obj_io.loadOBJ("logo.obj");
+  logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
+  gobjects = joinGObjectVectors(cornell, logo);
+  // for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
+  //   cout << *g << endl;
+  // }
+  // Scale all objects at once
+  //gobjects = obj_io.scale(WIDTH, gobjects);
+
+  // TODO: remove
+  // cout << "Abort before running SDL." << endl;
+  // exit(1);
+
+  window = DrawingWindow(WIDTH, HEIGHT, false);
+  depthbuf = DepthBuffer(WIDTH, HEIGHT);
+  the_image = Texture("cobbles.ppm");
+
   SDL_Event event;
 
   draw();
