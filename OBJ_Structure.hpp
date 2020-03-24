@@ -66,7 +66,7 @@ class OBJ_Structure {
         // If we've hit a new object, and the previous one was actually an
         // object whose Triangles we've created, then make a gobject from them
         if ((objName != "dummy") && (objName != pair->first)) {
-          result.push_back(GObject(objName, mtlDict[objMatNameDict[objName]], triangles));
+          result.push_back(GObject(objName, lookupColour(objName), triangles));
           triangles.clear();
         }
         objName = pair->first;
@@ -76,7 +76,7 @@ class OBJ_Structure {
           allVertices.at(vindices[0]),
           allVertices.at(vindices[1]),
           allVertices.at(vindices[2]),
-          mtlDict[objMatNameDict[objName]]); // colour
+          lookupColour(objName)); // colour
         // If we have texture vertices, make them into a TextureTriangle
         if (get<1>(face)) {
           tindices = get<1>(face).value();
@@ -93,10 +93,25 @@ class OBJ_Structure {
       }
       // The above loop skips the last object, so do it here if needed
       if (!triangles.empty() && (objName != "dummy")) {
-        result.push_back(GObject(objName, mtlDict[objMatNameDict[objName]], triangles));
+        result.push_back(GObject(objName, lookupColour(objName), triangles));
         triangles.clear();
       }
       return result;
+    }
+
+  private:
+    // All this just to provide a default value in case the lookup fails...
+    Colour lookupColour(string objName) {
+      string maybeMatName = objMatNameDict[objName];
+      //cout << "maybeMatName '" << maybeMatName << "'" << endl;
+      if (!maybeMatName.empty()) {
+        // Have to use count method rather than indexing operator. The latter
+        // returns a garbage colour if the lookup fails, which is no good.
+        int maybeMat = mtlDict.count(maybeMatName);
+        //cout << "maybeMat '" << maybeMat << "'" << endl;
+        if (maybeMat > 0) return mtlDict[objMatNameDict[objName]];
+      }
+      return Colour(0,0,0);
     }
 };
 

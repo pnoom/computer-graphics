@@ -152,9 +152,9 @@ class OBJ_IO {
         if (emptyOrCommentLine(lineString)) continue;
         istringstream lineStream(lineString);
         lineStream >> linePrefix;
-        cout << "linePrefix '" << linePrefix << "'" << endl;
+        //cout << "linePrefix '" << linePrefix << "'" << endl;
         if (linePrefix == "mtllib") {
-          cout << "This should only appear once" << endl;
+          // cout << "This should only appear once" << endl;
           lineStream >> structure.mtlLibFileName;
           // TODO: check which of these is empty, if any, and do sth appropriate
           tie(structure.mtlDict, structure.textureFilename) = loadMTL(structure.mtlLibFileName);
