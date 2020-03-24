@@ -42,14 +42,14 @@ class OBJ_Structure {
 
     OBJ_Structure () {}
 
+    // TODO: rewrite this, better.
+
+    // Loop through faceDict's key (i.e. all the objects in the scene, incl.
+    // "loose") and build a TextureTriangle by referencing the array,
+    // and then a ModelTriangle using the other array, and then make a gobject
+    // and add it to the vector.
     vector<GObject> toGObjects() {
       vector<GObject> result;
-      // TODO: implement me
-
-      // Loop through faceDict's key (i.e. all the objects in the scene, incl.
-      // "loose") and build a TextureTriangle by referencing the array,
-      // and then a ModelTriangle using the other array, and then make a gobject
-      // and add it to the vector.
 
       string objName = "dummy";
       faceData face;
@@ -59,14 +59,13 @@ class OBJ_Structure {
       ModelTriangle vtriangle;
       TextureTriangle ttriangle;
       vector<ModelTriangle> triangles;
-      int test = 0;
 
-      // Assumes faceDict is an ORDERED map
+      // Assumes faceDict is an ORDERED map. After C++03, multimap must preserve
+      // insertion order, so we're good.
       for (auto pair=faceDict.begin(); pair != faceDict.end(); pair++) {
-        cout << "test " << test << endl;
         // If we've hit a new object, and the previous one was actually an
         // object whose Triangles we've created, then make a gobject from them
-        if (!(objName == "dummy") && !(objName == pair->first)) {
+        if ((objName != "dummy") && (objName != pair->first)) {
           result.push_back(GObject(objName, mtlDict[objMatNameDict[objName]], triangles));
           triangles.clear();
         }
@@ -91,7 +90,11 @@ class OBJ_Structure {
 
         // Add the ModelTriangle to the vector for this gobject
         triangles.push_back(vtriangle);
-        test += 1;
+      }
+      // The above loop skips the last object, so do it here if needed
+      if (!triangles.empty() && (objName != "dummy")) {
+        result.push_back(GObject(objName, mtlDict[objMatNameDict[objName]], triangles));
+        triangles.clear();
       }
       return result;
     }

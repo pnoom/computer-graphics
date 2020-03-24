@@ -546,8 +546,8 @@ int main(int argc, char* argv[]) {
   //std::vector<GObject> gobjects = obj_io.loadOBJ("logo.obj", WIDTH);
 
   // TODO: remove
-  cout << "Abort before running SDL." << endl;
-  exit(1);
+  // cout << "Abort before running SDL." << endl;
+  // exit(1);
 
   window = DrawingWindow(WIDTH, HEIGHT, false);
   depthbuf = DepthBuffer(WIDTH, HEIGHT);
