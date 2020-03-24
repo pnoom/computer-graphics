@@ -65,20 +65,20 @@ class OBJ_Structure {
         // If we've hit a new object, and the previous one was actually an
         // object whose Triangles we've created, then make a gobject from them
         if (!(objName == "dummy") && !(objName == pair->first)) {
-          result.push_back(GObject(objName, ?, triangles);
+          result.push_back(GObject(objName, mtlDict[objMatNameDict[objName]], triangles));
           triangles.clear();
         }
         objName = pair->first;
         face = pair->second;
-        vindices = face<0>;
+        vindices = get<0>(face);
         vtriangle = ModelTriangle(
           allVertices.at(vindices[0]),
           allVertices.at(vindices[1]),
           allVertices.at(vindices[2]),
-        ); // colour??? Need an object-material map!!!
+          mtlDict[objMatNameDict[objName]]); // colour
         // If we have texture vertices, make them into a TextureTriangle
-        if (face<1>) {
-          tindices = face<1>.value();
+        if (get<1>(face)) {
+          tindices = get<1>(face).value();
           ttriangle = TextureTriangle(textureFilename,
             allTextureVertices.at(tindices[0]),
             allTextureVertices.at(tindices[1]),
