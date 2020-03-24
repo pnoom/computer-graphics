@@ -46,9 +46,7 @@ Texture the_image;
 DepthBuffer depthbuf;
 Camera camera;
 View_mode current_mode = WIRE;
-OBJ_IO obj_io;
 Light light;
-std::vector<GObject> gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
 
 int number_of_AA_samples = 4;
 
