@@ -36,7 +36,7 @@ class OBJ_Structure {
     vector<vec2> allTextureVertices;
 
     // These maps object names to indices into the above vectors
-    map<string, faceData> faceDict;
+    multimap<string, faceData> faceDict;
 
     unordered_map<string, string> objMatNameDict;
 
