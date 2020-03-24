@@ -33,11 +33,12 @@ class OBJ_Structure {
     // The vectors that hold all the actual points
     vector<vec3> allVertices;
     vector<vec2> allTextureVertices;
-    // FaceData just contain indices. This vector may not be necessary
-    vector<faceData> allFaces;
+
     // These map object names to indices into the above vectors
     indexDict vertexDict, textureVertexDict;
     unordered_map<string, faceData> faceDict;
+
+    unordered_map<string, string> objMatNameDict;
 
     OBJ_Structure () {}
 
@@ -50,20 +51,31 @@ class OBJ_Structure {
       // and then a ModelTriangle using the other array, and then make a gobject
       // and add it to the vector.
 
-      string objName;
+      string objName = "dummy";
       faceData face;
       vec3_int vindices;
       vec3_int tindices;
       //vec3_int nindices;
       ModelTriangle vtriangle;
       TextureTriangle ttriangle;
-      GObject gobject;
+      vector<ModelTriangle> triangles;
 
       // This loop won't work: need an ORDERED map, probably...
       for (auto pair=faceDict.begin(); pair != faceDict.end(); pair++) {
+        // If we've hit a new object, and the previous one was actually an
+        // object whose Triangles we've created, then make a gobject from them
+        if (!(objName == "dummy") && !(objName == pair->first)) {
+          result.push_back(GObject(objName, ?, triangles);
+          triangles.clear();
+        }
         objName = pair->first;
         face = pair->second;
         vindices = face<0>;
+        vtriangle = ModelTriangle(
+          allVertices.at(vindices[0]),
+          allVertices.at(vindices[1]),
+          allVertices.at(vindices[2]),
+        ); // colour??? Need an object-material map!!!
         // If we have texture vertices, make them into a TextureTriangle
         if (face<1>) {
           tindices = face<1>.value();
@@ -71,15 +83,9 @@ class OBJ_Structure {
             allTextureVertices.at(tindices[0]),
             allTextureVertices.at(tindices[1]),
             allTextureVertices.at(tindices[2]));
+          vtriangle.maybeTextureTriangle.emplace(ttriangle);
         }
-        vtriangle = ModelTriangle(
-          allVertices.at(vindices[0]),
-          allVertices.at(vindices[1]),
-          allVertices.at(vindices[2]),
-        ); // colour??? Need an object-material map!!!
-
-        // This needs a VECTOR of ModelTriangles, FFS
-        gobject = GObject(objName, ?, );
+        // else set maybeTextureTriangle to nullopt? Or will it be that already?
       }
       return result;
     }

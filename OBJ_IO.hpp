@@ -174,11 +174,6 @@ class OBJ_IO {
         }
         else if (linePrefix == "f") {
           face = processFaceLine(lineStream);
-
-          // Do I actually need this?
-          //structure.allFaces.push_back(face);
-
-          // I definitely need this.
           structure.faceDict.insert({currentObjName, face});
         }
         else if (linePrefix == "o") {
@@ -187,8 +182,7 @@ class OBJ_IO {
         // Assumes an "o" line has come before it, initialising currentObjName
         else if (linePrefix == "usemtl") {
             lineStream >> currentObjMtlName;
-            // At some point, get material from dict like this:
-            // structure.mtlDict[currentObjMtlName];
+            structure.objMatNameDict.insert({currentObjName, currentObjMtlName});
         }
       }
       inFile.close();
