@@ -39,6 +39,7 @@ class OBJ_IO {
     vector<GObject> loadOBJ(string filename, int WIDTH) {
       vector<GObject> res;
       OBJ_Structure structure = loadOBJpass1(filename);
+      cout << structure << endl;
       res = structure.toGObjects();
       res = scale(WIDTH, res);
       return res;
@@ -68,11 +69,18 @@ class OBJ_IO {
       while (lineStream >> faceTerm) {
         numRead = sscanf(faceTerm.c_str(), "%d/%d", &vindices[i], &tindices[i]); // nindices[i]
         if (numRead == 1) vts = false;
+        i += 1;
       }
-      if (vts)
+      // Don't forget to subtract one from all the indices, since OBJ files use
+      // 1-based indices
+      for (int i=0; i<(int)vindices.size(); i++) vindices[i] -= 1;
+      if (vts) {
+        for (int i=0; i<(int)tindices.size(); i++) tindices[i] -= 1;
         face = make_tuple(vindices, tindices, nullopt);
-      else
+      }
+      else {
         face = make_tuple(vindices, nullopt, nullopt);
+      }
       return face;
     }
 
@@ -114,11 +122,6 @@ class OBJ_IO {
         }
       }
       inFile.close();
-      cout << "textureFilename '" << textureFilename << "'" << endl;
-      //cout << "mtlDict" << mtlDict << endl;
-      //for (auto pair=mtlDict.begin(); pair != mtlDict.end(); pair++) {
-      //  cout << "mtlDict: key '" << pair->first << "' value '" << pair->second << "'" << endl;
-      //}
       cout << "Loaded mtl library." << endl;
       return make_tuple(mtlDict, textureFilename);
     }
@@ -133,8 +136,6 @@ class OBJ_IO {
       vec3 vertex;
       vec2 textureVertex;
       faceData face;
-      int vIndex = 1;
-      int vtIndex = 1;
       string currentObjName = "loose";
       string currentObjMtlName;
 
@@ -161,16 +162,12 @@ class OBJ_IO {
           vertex[1] = b;
           vertex[2] = c;
           structure.allVertices.push_back(vertex);
-          structure.vertexDict.insert({currentObjName, vIndex});
-          vIndex += 1;
         }
         else if (linePrefix == "vt") {
           lineStream >> a >> b;
           textureVertex[0] = a;
           textureVertex[1] = b;
           structure.allTextureVertices.push_back(textureVertex);
-          structure.textureVertexDict.insert({currentObjName, vtIndex});
-          vtIndex += 1;
         }
         else if (linePrefix == "f") {
           face = processFaceLine(lineStream);

@@ -1,5 +1,6 @@
 
 #include <unordered_map>
+#include <map>
 #include <tuple>
 #include <optional>
 
@@ -34,9 +35,8 @@ class OBJ_Structure {
     vector<vec3> allVertices;
     vector<vec2> allTextureVertices;
 
-    // These map object names to indices into the above vectors
-    indexDict vertexDict, textureVertexDict;
-    unordered_map<string, faceData> faceDict;
+    // These maps object names to indices into the above vectors
+    map<string, faceData> faceDict;
 
     unordered_map<string, string> objMatNameDict;
 
@@ -60,7 +60,7 @@ class OBJ_Structure {
       TextureTriangle ttriangle;
       vector<ModelTriangle> triangles;
 
-      // This loop won't work: need an ORDERED map, probably...
+      // Assumes faceDict is an ORDERED map
       for (auto pair=faceDict.begin(); pair != faceDict.end(); pair++) {
         // If we've hit a new object, and the previous one was actually an
         // object whose Triangles we've created, then make a gobject from them
@@ -90,3 +90,23 @@ class OBJ_Structure {
       return result;
     }
 };
+
+std::ostream& operator<<(std::ostream& os, const OBJ_Structure& structure)
+{
+    os << "mltLibFileName '" << structure.mtlLibFileName << "'" << endl;
+    os << "textureFilename '" << structure.textureFilename << "'" << endl;
+    for (auto pair=structure.mtlDict.begin(); pair != structure.mtlDict.end(); pair++) {
+     cout << "mtlDict key '" << pair->first << "' value '" << pair->second << "'" << endl;
+    }
+    os << "allVertices.size() " << structure.allVertices.size() << endl;
+    os << "allTextureVertices.size() " << structure.allTextureVertices.size() << endl;
+    for (auto pair=structure.objMatNameDict.begin(); pair != structure.objMatNameDict.end(); pair++) {
+     cout << "objMatNameDict key '" << pair->first << "' value '" << pair->second << "'" << endl;
+    }
+    os << "faceDict.size() " << structure.faceDict.size() << endl;
+    // How to print tuples and optionals?
+    // for (auto pair=structure.faceDict.begin(); pair != structure.faceDict.end(); pair++) {
+    //  cout << "faceDict key '" << pair->first << "' value '" << pair->second << "'" << endl;
+    // }
+    return os;
+}
