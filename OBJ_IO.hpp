@@ -41,7 +41,7 @@ class OBJ_IO {
       OBJ_Structure structure = loadOBJpass1(filename);
       cout << structure << endl;
       res = structure.toGObjects();
-      for (auto i=0; i<res.size(); i++) {
+      for (int i=0; i<(int)res.size(); i++) {
         cout << res.at(i) << endl;
       }
       res = scale(WIDTH, res);
@@ -89,7 +89,6 @@ class OBJ_IO {
 
     // Don't bother having an MTL_Structure class, just use a tuple
     tuple<materialDict, string> loadMTL(string filename) {
-      cout << "Loading included mtl library..." << endl;
       // Return values
       materialDict mtlDict;
       string textureFilename;
@@ -125,7 +124,6 @@ class OBJ_IO {
         }
       }
       inFile.close();
-      cout << "Loaded mtl library." << endl;
       return make_tuple(mtlDict, textureFilename);
     }
 
@@ -154,7 +152,9 @@ class OBJ_IO {
         if (emptyOrCommentLine(lineString)) continue;
         istringstream lineStream(lineString);
         lineStream >> linePrefix;
+        cout << "linePrefix '" << linePrefix << "'" << endl;
         if (linePrefix == "mtllib") {
+          cout << "This should only appear once" << endl;
           lineStream >> structure.mtlLibFileName;
           // TODO: check which of these is empty, if any, and do sth appropriate
           tie(structure.mtlDict, structure.textureFilename) = loadMTL(structure.mtlLibFileName);

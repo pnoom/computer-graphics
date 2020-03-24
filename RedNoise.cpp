@@ -542,12 +542,12 @@ void handleEvent(SDL_Event event) {
 int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
-  gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
-  //std::vector<GObject> gobjects = obj_io.loadOBJ("logo.obj", WIDTH);
+  //gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
+  gobjects = obj_io.loadOBJ("logo.obj", WIDTH);
 
   // TODO: remove
-  // cout << "Abort before running SDL." << endl;
-  // exit(1);
+  cout << "Abort before running SDL." << endl;
+  exit(1);
 
   window = DrawingWindow(WIDTH, HEIGHT, false);
   depthbuf = DepthBuffer(WIDTH, HEIGHT);
