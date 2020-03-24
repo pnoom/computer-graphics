@@ -539,11 +539,31 @@ void handleEvent(SDL_Event event) {
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
 
+// For some reason, all the ways to "append" or "copy" vectors in C++ yield an
+// iterator, not a vector, which is no good. So we have to roll our own,
+// inefficient verson.
+vector<GObject> joinGObjectVectors(vector<GObject> gobjects1, vector<GObject> gobjects2) {
+  vector<GObject> result;
+  for (int i=0; i<(int)(gobjects1.size() - 1); i++) {
+    result.push_back(gobjects1.at(i));
+  }
+  for (int i=0; i<(int)(gobjects2.size() - 1); i++) {
+    result.push_back(gobjects2.at(i));
+  }
+  return result;
+}
+
 int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
-  //gobjects = obj_io.loadOBJ("cornell-box.obj", WIDTH);
-  gobjects = obj_io.loadOBJ("logo.obj", WIDTH);
+  vector<GObject> cornell;
+  // vector<GObject> logo;
+  cornell = obj_io.loadOBJ("cornell-box.obj");
+  // logo = obj_io.loadOBJ("logo.obj");
+  // gobjects = joinGObjectVectors(cornell, logo);
+  // for (int i=0; i<(int)gobjects.size(); i++)
+  //   cout << gobjects.at(i) << endl;
+  gobjects = obj_io.scale(WIDTH, cornell);
 
   // TODO: remove
   // cout << "Abort before running SDL." << endl;

@@ -36,7 +36,7 @@ class OBJ_IO {
     // with the current named object.
     // Finally, go through the intermediate structures representing these named
     // objects, building gobjects (first ModelTriangles)
-    vector<GObject> loadOBJ(string filename, int WIDTH) {
+    vector<GObject> loadOBJ(string filename) {
       vector<GObject> res;
       OBJ_Structure structure = loadOBJpass1(filename);
       cout << structure << endl;
@@ -44,8 +44,67 @@ class OBJ_IO {
       for (int i=0; i<(int)res.size(); i++) {
         cout << res.at(i) << endl;
       }
-      res = scale(WIDTH, res);
       return res;
+    }
+
+    std::vector<GObject> scale(int WIDTH, std::vector<GObject> gobjects) {
+      float currentMinComponent = std::numeric_limits<float>::infinity();
+      for (uint j=0; j<gobjects.size(); j++) {
+        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+          for (int k=0; k<3; k++) {
+            float smallest = minComponent(gobjects.at(j).faces.at(i).vertices[k]);
+            if (smallest < currentMinComponent) currentMinComponent = smallest;
+          }
+        }
+      }
+
+      float addFactor = currentMinComponent < 0.0f ? abs(currentMinComponent) : 0.0f;
+
+      for (uint j=0; j<gobjects.size(); j++) {
+        //std::cout << "gobject " << gobjects.at(j).name << '\n';
+        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+          for (int k=0; k<3; k++) {
+            glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
+            v[0] += addFactor;
+            v[1] += addFactor;
+            v[2] += addFactor;
+            gobjects.at(j).faces.at(i).vertices[k] = v;
+            // std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
+          }
+        }
+      }
+
+      float currentMaxComponent = -std::numeric_limits<float>::infinity();
+      for (uint j=0; j<gobjects.size(); j++) {
+        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+          for (int k=0; k<3; k++) {
+            float greatest = maxComponent(gobjects.at(j).faces.at(i).vertices[k]);
+            if (greatest > currentMaxComponent) currentMaxComponent = greatest;
+          }
+        }
+      }
+
+      float multFactor = WIDTH / (currentMaxComponent);
+
+      std::cout << "MULTIPLICATIVE SCALE FACTOR: " << multFactor << '\n';
+      std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
+
+      for (uint j=0; j<gobjects.size(); j++) {
+        //std::cout << "gobject " << gobjects.at(j).name << '\n';
+        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
+          for (int k=0; k<3; k++) {
+            glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
+            v[0] *= multFactor;
+            v[1] *= multFactor;
+            v[2] *= multFactor;
+            gobjects.at(j).faces.at(i).vertices[k] = v;
+            //std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
+          }
+        }
+      }
+      //std::cout << "finished scaling" << '\n';
+
+      return gobjects;
     }
 
   private:
@@ -198,65 +257,5 @@ class OBJ_IO {
     float minComponent(glm::vec3 v) {
       float smallest = std::min(std::min(v[0], v[1]), v[2]);
       return smallest;
-    }
-
-    std::vector<GObject> scale(int WIDTH, std::vector<GObject> gobjects) {
-      float currentMinComponent = std::numeric_limits<float>::infinity();
-      for (uint j=0; j<gobjects.size(); j++) {
-        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
-          for (int k=0; k<3; k++) {
-            float smallest = minComponent(gobjects.at(j).faces.at(i).vertices[k]);
-            if (smallest < currentMinComponent) currentMinComponent = smallest;
-          }
-        }
-      }
-
-      float addFactor = currentMinComponent < 0.0f ? abs(currentMinComponent) : 0.0f;
-
-      for (uint j=0; j<gobjects.size(); j++) {
-        //std::cout << "gobject " << gobjects.at(j).name << '\n';
-        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
-          for (int k=0; k<3; k++) {
-            glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
-            v[0] += addFactor;
-            v[1] += addFactor;
-            v[2] += addFactor;
-            gobjects.at(j).faces.at(i).vertices[k] = v;
-            // std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
-          }
-        }
-      }
-
-      float currentMaxComponent = -std::numeric_limits<float>::infinity();
-      for (uint j=0; j<gobjects.size(); j++) {
-        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
-          for (int k=0; k<3; k++) {
-            float greatest = maxComponent(gobjects.at(j).faces.at(i).vertices[k]);
-            if (greatest > currentMaxComponent) currentMaxComponent = greatest;
-          }
-        }
-      }
-
-      float multFactor = WIDTH / (currentMaxComponent);
-
-      std::cout << "MULTIPLICATIVE SCALE FACTOR: " << multFactor << '\n';
-      std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
-
-      for (uint j=0; j<gobjects.size(); j++) {
-        //std::cout << "gobject " << gobjects.at(j).name << '\n';
-        for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
-          for (int k=0; k<3; k++) {
-            glm::vec3 v = gobjects.at(j).faces.at(i).vertices[k];
-            v[0] *= multFactor;
-            v[1] *= multFactor;
-            v[2] *= multFactor;
-            gobjects.at(j).faces.at(i).vertices[k] = v;
-            //std::cout << "NEW VERTEX: (" << v.x << ", " << v.y << ", " << v.z << ")\n";
-          }
-        }
-      }
-      //std::cout << "finished scaling" << '\n';
-
-      return gobjects;
     }
 };
