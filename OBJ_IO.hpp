@@ -41,6 +41,9 @@ class OBJ_IO {
       OBJ_Structure structure = loadOBJpass1(filename);
       cout << structure << endl;
       res = structure.toGObjects();
+      for (auto i=0; i<res.size(); i++) {
+        cout << res.at(i) << endl;
+      }
       res = scale(WIDTH, res);
       return res;
     }

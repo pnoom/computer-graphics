@@ -59,9 +59,11 @@ class OBJ_Structure {
       ModelTriangle vtriangle;
       TextureTriangle ttriangle;
       vector<ModelTriangle> triangles;
+      int test = 0;
 
       // Assumes faceDict is an ORDERED map
       for (auto pair=faceDict.begin(); pair != faceDict.end(); pair++) {
+        cout << "test " << test << endl;
         // If we've hit a new object, and the previous one was actually an
         // object whose Triangles we've created, then make a gobject from them
         if (!(objName == "dummy") && !(objName == pair->first)) {
@@ -86,6 +88,10 @@ class OBJ_Structure {
           vtriangle.maybeTextureTriangle.emplace(ttriangle);
         }
         // else set maybeTextureTriangle to nullopt? Or will it be that already?
+
+        // Add the ModelTriangle to the vector for this gobject
+        triangles.push_back(vtriangle);
+        test += 1;
       }
       return result;
     }
