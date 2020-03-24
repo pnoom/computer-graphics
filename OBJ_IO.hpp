@@ -39,11 +39,8 @@ class OBJ_IO {
     vector<GObject> loadOBJ(string filename) {
       vector<GObject> res;
       OBJ_Structure structure = loadOBJpass1(filename);
-      cout << structure << endl;
+      //cout << structure << endl;
       res = structure.toGObjects();
-      for (int i=0; i<(int)res.size(); i++) {
-        cout << res.at(i) << endl;
-      }
       return res;
     }
 

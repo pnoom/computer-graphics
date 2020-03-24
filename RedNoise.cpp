@@ -544,11 +544,11 @@ void handleEvent(SDL_Event event) {
 // inefficient verson.
 vector<GObject> joinGObjectVectors(vector<GObject> gobjects1, vector<GObject> gobjects2) {
   vector<GObject> result;
-  for (int i=0; i<(int)(gobjects1.size() - 1); i++) {
-    result.push_back(gobjects1.at(i));
+  for (auto g=gobjects1.begin(); g != gobjects1.end(); g++) {
+    result.push_back(*g);
   }
-  for (int i=0; i<(int)(gobjects2.size() - 1); i++) {
-    result.push_back(gobjects2.at(i));
+  for (auto g=gobjects2.begin(); g != gobjects2.end(); g++) {
+    result.push_back(*g);
   }
   return result;
 }
@@ -557,13 +557,20 @@ int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
   vector<GObject> cornell;
-  // vector<GObject> logo;
+  vector<GObject> logo;
+  // Could move call to scale() back into OBJ_Structure, but wanted to see what
+  // happens if everything was scaled at once (answer: only logo is visible, not
+  // box).
   cornell = obj_io.loadOBJ("cornell-box.obj");
-  // logo = obj_io.loadOBJ("logo.obj");
-  // gobjects = joinGObjectVectors(cornell, logo);
-  // for (int i=0; i<(int)gobjects.size(); i++)
-  //   cout << gobjects.at(i) << endl;
-  gobjects = obj_io.scale(WIDTH, cornell);
+  cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
+  logo = obj_io.loadOBJ("logo.obj");
+  logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
+  gobjects = joinGObjectVectors(cornell, logo);
+  // for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
+  //   cout << *g << endl;
+  // }
+  // Scale all objects at once
+  //gobjects = obj_io.scale(WIDTH, gobjects);
 
   // TODO: remove
   // cout << "Abort before running SDL." << endl;
