@@ -30,7 +30,7 @@ class OBJ_IO {
       return make_tuple(structure.toGObjects(), maybeTexture);
     }
 
-    std::vector<GObject> scale(int WIDTH, std::vector<GObject> gobjects) {
+    std::vector<GObject> scale(int width, std::vector<GObject> gobjects) {
       float currentMinComponent = std::numeric_limits<float>::infinity();
       for (uint j=0; j<gobjects.size(); j++) {
         for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
@@ -67,7 +67,7 @@ class OBJ_IO {
         }
       }
 
-      float multFactor = WIDTH / (currentMaxComponent);
+      float multFactor = width / (currentMaxComponent);
 
       //std::cout << "MULTIPLICATIVE SCALE FACTOR: " << multFactor << '\n';
       //std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
