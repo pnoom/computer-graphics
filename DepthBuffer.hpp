@@ -6,13 +6,13 @@ class DepthBuffer {
     int width, height;
 
     DepthBuffer() {}
-    
+
     DepthBuffer(int w, int h){
       width = w;
       height = h;
 
       depthbuf = (double*)malloc(width*height*sizeof(double));
-      std::cout << "depth buffer allocated, size " << width << " by " << height << '\n';
+      // std::cout << "depth buffer allocated, size " << width << " by " << height << '\n';
       instantiateDepthBuf();
     }
 

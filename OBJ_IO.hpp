@@ -83,8 +83,8 @@ class OBJ_IO {
 
       float multFactor = WIDTH / (currentMaxComponent);
 
-      std::cout << "MULTIPLICATIVE SCALE FACTOR: " << multFactor << '\n';
-      std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
+      //std::cout << "MULTIPLICATIVE SCALE FACTOR: " << multFactor << '\n';
+      //std::cout << "ADDITIVE SCALE FACTOR: " << addFactor << '\n';
 
       for (uint j=0; j<gobjects.size(); j++) {
         //std::cout << "gobject " << gobjects.at(j).name << '\n';

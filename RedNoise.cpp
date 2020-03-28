@@ -497,7 +497,6 @@ void draw() {
   else {
     drawGeometryViaRayTracing();
   }
-  camera.printCamera();
 }
 
 void handleEvent(SDL_Event event) {
@@ -507,7 +506,14 @@ void handleEvent(SDL_Event event) {
       cout << "P: WRITE PPM FILE" << endl;
       writePPM();
     }
-
+    else if(event.key.keysym.sym == SDLK_i) {
+      cout << "I: PRINT INFO" << endl;
+      cout << "--------------------------------------------------" << endl;
+      camera.printCamera();
+      std::cout << "LIGHT position:\n";
+      printVec3(light.Position);
+      cout << "--------------------------------------------------" << endl;
+    }
     else if(event.key.keysym.sym == SDLK_b) {
       cout << "B: DRAW CORNELL BOX (RASTER)" << endl;
       current_mode = RASTER;
@@ -547,19 +553,19 @@ void handleEvent(SDL_Event event) {
     }
 
     else if(event.key.keysym.sym == SDLK_UP) {
-      cout << "UP: ROTATE CAMERA UP" << endl;
+      cout << "UP: TILT CAMERA UP" << endl;
       camera.rotate_X_By(-1.0);
     }
     else if(event.key.keysym.sym == SDLK_DOWN) {
-      cout << "DOWN: ROTATE CAMERA DOWN" << endl;
+      cout << "DOWN: TILT CAMERA DOWN" << endl;
       camera.rotate_X_By(1.0);
     }
     else if(event.key.keysym.sym == SDLK_LEFT) {
-      cout << "LEFT: ROTATE CAMERA ANTICLOCKWISE Y AXIS" << endl;
+      cout << "LEFT: PAN CAMERA LEFT" << endl;
       camera.rotate_Y_By(-1.0);
     }
     else if(event.key.keysym.sym == SDLK_RIGHT) {
-      cout << "RIGHT: ROTATE CAMERA CLOCKWISE ABOUT Y AXIS" << endl;
+      cout << "RIGHT: PAN CAMERA RIGHT" << endl;
       camera.rotate_Y_By(1.0);
     }
 
@@ -651,10 +657,6 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
 
   draw();
-  std::cout << "LIGHT position:\n";
-  printVec3(light.Position);
-
-  cout << "date/time: '" << getDateTimeString() << "'" << endl;
 
   while(true) {
     if(window.pollForInputEvents(&event)) handleEvent(event);

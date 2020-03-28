@@ -13,7 +13,7 @@ COMPILER_OPTIONS = -c -pipe -Wall -std=c++17
 DEBUG_OPTIONS = -ggdb -g3
 FUSSY_OPTIONS = -pedantic
 SANITIZER_OPTIONS = -O1 -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer
-SPEEDY_OPTIONS = -Ofast -funsafe-math-optimizations -march=native
+SPEEDY_OPTIONS = -Ofast -funsafe-math-optimizations -march=native -Wno-unused-result
 LINKER_OPTIONS =
 
 # Set up flags
