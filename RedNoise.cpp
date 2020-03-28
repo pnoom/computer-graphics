@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <string>
 #include <math.h>
+#include <filesystem>
 
 #include "Texture.hpp"
 #include "GObject.hpp"
@@ -22,12 +23,17 @@
 using namespace std;
 using namespace glm;
 
+namespace fs = std::filesystem;
+
 // Definitions
 // ---
 #define WIDTH 640
 #define HEIGHT 480
 
-#define OUTPUT_FILE "screenie.ppm"
+#define SCREENSHOT_DIR "./screenies/"
+#define SCREENSHOT_SUFFIX "_screenie.ppm"
+
+fs::path screenshotDir;
 
 Colour COLOURS[] = {Colour(255, 0, 0), Colour(0, 255, 0), Colour(0, 0, 255)};
 Colour WHITE = Colour(255, 255, 255);
@@ -61,8 +67,22 @@ void printVec3(vec3 v) { cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
 
-void writePPM(string filename) {
-  FILE* f = fopen(filename.c_str(), "w");
+// Adapted from:
+// https://stackoverflow.com/questions/5438482/getting-the-current-time-as-a-yyyy-mm-dd-hh-mm-ss-string/5438502
+string getDateTimeString() {
+  char buf[80];
+  time_t epochTime;
+  time(&epochTime);
+  tm* locTime = localtime(&epochTime);
+  strftime(buf, 79, "%Y-%m-%d_%H:%M:%S", locTime);
+  return string(buf);
+}
+
+void writePPM() {
+  fs::path screenshotName = fs::path(getDateTimeString() + SCREENSHOT_SUFFIX);
+  fs::path outputFile = screenshotDir / screenshotName;
+
+  FILE* f = fopen(string(outputFile).c_str(), "w");
   if (f == NULL) {
     std::cout << "Could not open file." << '\n';
     exit(1);
@@ -485,7 +505,7 @@ void handleEvent(SDL_Event event) {
   if(event.type == SDL_KEYDOWN) {
     if(event.key.keysym.sym == SDLK_p) {
       cout << "P: WRITE PPM FILE" << endl;
-      writePPM(OUTPUT_FILE);
+      writePPM();
     }
 
     else if(event.key.keysym.sym == SDLK_b) {
@@ -625,11 +645,16 @@ int main(int argc, char* argv[]) {
   depthbuf = DepthBuffer(WIDTH, HEIGHT);
   the_image = Texture("cobbles.ppm");
 
+  screenshotDir = SCREENSHOT_DIR;
+  fs::create_directory(screenshotDir); // ensure it exists
+
   SDL_Event event;
 
   draw();
   std::cout << "LIGHT position:\n";
   printVec3(light.Position);
+
+  cout << "date/time: '" << getDateTimeString() << "'" << endl;
 
   while(true) {
     if(window.pollForInputEvents(&event)) handleEvent(event);
