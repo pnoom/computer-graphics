@@ -12,6 +12,8 @@
 #include <string>
 #include <math.h>
 #include <filesystem>
+#include <tuple>
+#include <optional>
 
 #include "Texture.hpp"
 #include "GObject.hpp"
@@ -48,7 +50,8 @@ OBJ_IO obj_io;
 std::vector<GObject> gobjects;
 DrawingWindow window;
 
-Texture the_image;
+Texture logoTexture;
+
 DepthBuffer depthbuf;
 Camera camera;
 View_mode current_mode = WIRE;
@@ -150,9 +153,9 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   }
 }
 
-//uint32_t get_textured_pixel(TexturePoint texturePoint) {
-//  return the_image.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * the_image.width))];
-//}
+uint32_t get_textured_pixel(TexturePoint texturePoint, Texture texture) {
+ return texture.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * texture.width))];
+}
 
 void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
@@ -618,14 +621,21 @@ vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
 int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
+
   vector<GObject> cornell;
   vector<GObject> logo;
-  // Could move call to scale() back into OBJ_Structure, but wanted to see what
-  // happens if everything was scaled at once (answer: only logo is visible, not
-  // box).
-  cornell = obj_io.loadOBJ("cornell-box.obj");
+
+  // This tuple/optional nonsense is just to avoid changing OBJ_IO/Structure too much.
+  // For each obj file we load, it may have a texture file. We should have a global
+  // variable for each texture that we know will actually exist and set it to the
+  // value of the optional here.
+  optional<Texture> maybeCornellTexture; // we know there isn't one, but this shows the usage
+  optional<Texture> maybeLogoTexture;
+  tie(cornell, maybeCornellTexture) = obj_io.loadOBJ("cornell-box.obj");
   cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
-  logo = obj_io.loadOBJ("logo.obj");
+  tie(logo, maybeLogoTexture) = obj_io.loadOBJ("logo.obj");
+  if (maybeLogoTexture)
+    logoTexture = maybeLogoTexture.value();
   logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
   gobjects = joinGObjectVectors(cornell, logo);
   // for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
@@ -649,7 +659,6 @@ int main(int argc, char* argv[]) {
 
   window = DrawingWindow(WIDTH, HEIGHT, false);
   depthbuf = DepthBuffer(WIDTH, HEIGHT);
-  the_image = Texture("cobbles.ppm");
 
   screenshotDir = SCREENSHOT_DIR;
   fs::create_directory(screenshotDir); // ensure it exists

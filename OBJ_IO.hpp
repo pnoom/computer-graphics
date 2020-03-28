@@ -8,6 +8,7 @@
 #include <tuple>
 #include <optional>
 #include "OBJ_Structure.hpp"
+#include "Texture.hpp"
 
 using namespace std;
 using namespace glm;
@@ -19,29 +20,14 @@ class OBJ_IO {
     // For clarity: each ModelTriangle (a triangle in 3D space) may get their
     // "filling" from a TextureTriangle (a triangle in 2D space).
 
-    // Pass 1:
-    // First process included .mtl files (build dictionary of materials and/or
-    // get the filename of the texture file.) Then go through whole file and:
-    // Store all vertices and texture coords in two vectors. (Can't do faces yet
-    // since they use global indices for vertices.) (Actually, we CAN, if we
-    // just store the indices for now. Then, in second pass, we can build them.
-    // The second pass is needed mainly for the "named object" stuff.)
-
-    // Pass 2:
-    // Go through whole file again (tracking the indices of vertices, texture
-    // points and faces):
-    // If no named object (e.g. light, back_wall) has been introduced,
-    // associate the current indices with an extra object called "loose".
-    // Otherwise, between named object intros: associate the current indices
-    // with the current named object.
-    // Finally, go through the intermediate structures representing these named
-    // objects, building gobjects (first ModelTriangles)
-    vector<GObject> loadOBJ(string filename) {
-      vector<GObject> res;
+    tuple<vector<GObject>, optional<Texture>> loadOBJ(string filename) {
+      optional<Texture> maybeTexture;
       OBJ_Structure structure = loadOBJpass1(filename);
+      if (structure.textureFilename.empty())
+        maybeTexture = nullopt;
+      else maybeTexture.emplace(Texture(structure.textureFilename));
       //cout << structure << endl;
-      res = structure.toGObjects();
-      return res;
+      return make_tuple(structure.toGObjects(), maybeTexture);
     }
 
     std::vector<GObject> scale(int WIDTH, std::vector<GObject> gobjects) {
