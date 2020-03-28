@@ -24,8 +24,8 @@ using namespace glm;
 
 // Definitions
 // ---
-#define WIDTH 500
-#define HEIGHT 500
+#define WIDTH 640
+#define HEIGHT 480
 
 #define OUTPUT_FILE "screenie.ppm"
 
@@ -573,6 +573,22 @@ vector<GObject> joinGObjectVectors(vector<GObject> gobjects1, vector<GObject> go
   return result;
 }
 
+bool isLight(GObject gobj) {
+  return (gobj.name == "light");
+}
+
+vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
+  vec3 accVerts = vec3(0.0f, 0.0f, 0.0f);
+  int numVerts = 0;
+  for (auto f=faces.begin(); f != faces.end(); f++) {
+    for (auto i=0; i<3; i++) {
+      accVerts += (*f).vertices[i];
+      numVerts += 1;
+    }
+  }
+  return accVerts / (float)numVerts;
+}
+
 int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
@@ -592,6 +608,15 @@ int main(int argc, char* argv[]) {
   // Scale all objects at once
   //gobjects = obj_io.scale(WIDTH, gobjects);
 
+  // Find the light gobject, average its vertices, and use that as the light pos
+  // (but shift it down slightly first, so it doesn't lie exactly within the
+  // light object).
+  // Otherwise the light keeps its default position.
+  vector<GObject>::iterator maybeLight = find_if(gobjects.begin(), gobjects.end(), isLight);
+  if (maybeLight != gobjects.end()) {
+    light.Position = averageVerticesOfFaces((*maybeLight).faces) - vec3(0.0f, 10.0f, 0.0f);
+  }
+
   // TODO: remove
   // cout << "Abort before running SDL." << endl;
   // exit(1);
@@ -603,7 +628,6 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
 
   draw();
-  camera.printCamera();
   std::cout << "LIGHT position:\n";
   printVec3(light.Position);
 
