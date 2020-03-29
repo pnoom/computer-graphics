@@ -66,6 +66,7 @@ float min(float A, float B) { if (A < B) return A; return B; }
 int modulo(int x, int y) { if (y == 0) return x; return ((x % y) + x) % y; }
 bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
 void printVec3(vec3 v) { cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n"; }
+bool isLight(GObject gobj) { return (gobj.name == "light"); }
 
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
@@ -106,6 +107,62 @@ void writePPM() {
     }
   }
   fclose(f);
+}
+
+// For some reason, all the ways to "append" or "copy" vectors in C++ yield an
+// iterator, not a vector, which is no good. So we have to roll our own,
+// inefficient verson.
+vector<GObject> joinGObjectVectors(vector<GObject> gobjects1, vector<GObject> gobjects2) {
+  vector<GObject> result;
+  for (auto g=gobjects1.begin(); g != gobjects1.end(); g++) {
+    result.push_back(*g);
+  }
+  for (auto g=gobjects2.begin(); g != gobjects2.end(); g++) {
+    result.push_back(*g);
+  }
+  return result;
+}
+
+vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
+  vec3 accVerts = vec3(0.0f, 0.0f, 0.0f);
+  int numVerts = 0;
+  for (auto f=faces.begin(); f != faces.end(); f++) {
+    for (auto i=0; i<3; i++) {
+      accVerts += (*f).vertices[i];
+      numVerts += 1;
+    }
+  }
+  return accVerts / (float)numVerts;
+}
+
+void readOBJs() {
+  vector<GObject> cornell;
+  vector<GObject> logo;
+
+  // This tuple/optional nonsense is just to avoid changing OBJ_IO/Structure too much.
+  // For each obj file we load, it may have a texture file. We should have a global
+  // variable for each texture that we know will actually exist and set it to the
+  // value of the optional here.
+  optional<Texture> maybeCornellTexture; // we know there isn't one, but this shows the usage
+  optional<Texture> maybeLogoTexture;
+
+  tie(cornell, maybeCornellTexture) = obj_io.loadOBJ("cornell-box.obj");
+  cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
+  tie(logo, maybeLogoTexture) = obj_io.loadOBJ("logo.obj");
+
+  if (maybeLogoTexture)
+    logoTexture = maybeLogoTexture.value();
+  logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
+  gobjects = joinGObjectVectors(cornell, logo);
+
+  // Find the light gobject, average its vertices, and use that as the light pos
+  // (but shift it down slightly first, so it doesn't lie exactly within the
+  // light object).
+  // Otherwise the light keeps its default position.
+  vector<GObject>::iterator maybeLight = find_if(gobjects.begin(), gobjects.end(), isLight);
+  if (maybeLight != gobjects.end()) {
+    light.Position = averageVerticesOfFaces((*maybeLight).faces) - vec3(0.0f, 10.0f, 0.0f);
+  }
 }
 
 // Raster Functions
@@ -598,74 +655,10 @@ void handleEvent(SDL_Event event) {
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 }
 
-// For some reason, all the ways to "append" or "copy" vectors in C++ yield an
-// iterator, not a vector, which is no good. So we have to roll our own,
-// inefficient verson.
-vector<GObject> joinGObjectVectors(vector<GObject> gobjects1, vector<GObject> gobjects2) {
-  vector<GObject> result;
-  for (auto g=gobjects1.begin(); g != gobjects1.end(); g++) {
-    result.push_back(*g);
-  }
-  for (auto g=gobjects2.begin(); g != gobjects2.end(); g++) {
-    result.push_back(*g);
-  }
-  return result;
-}
-
-bool isLight(GObject gobj) {
-  return (gobj.name == "light");
-}
-
-vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
-  vec3 accVerts = vec3(0.0f, 0.0f, 0.0f);
-  int numVerts = 0;
-  for (auto f=faces.begin(); f != faces.end(); f++) {
-    for (auto i=0; i<3; i++) {
-      accVerts += (*f).vertices[i];
-      numVerts += 1;
-    }
-  }
-  return accVerts / (float)numVerts;
-}
-
 int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
-
-  vector<GObject> cornell;
-  vector<GObject> logo;
-
-  // This tuple/optional nonsense is just to avoid changing OBJ_IO/Structure too much.
-  // For each obj file we load, it may have a texture file. We should have a global
-  // variable for each texture that we know will actually exist and set it to the
-  // value of the optional here.
-  optional<Texture> maybeCornellTexture; // we know there isn't one, but this shows the usage
-  optional<Texture> maybeLogoTexture;
-  tie(cornell, maybeCornellTexture) = obj_io.loadOBJ("cornell-box.obj");
-  cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
-  tie(logo, maybeLogoTexture) = obj_io.loadOBJ("logo.obj");
-  if (maybeLogoTexture)
-    logoTexture = maybeLogoTexture.value();
-  logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
-  gobjects = joinGObjectVectors(cornell, logo);
-  // for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
-  //   cout << *g << endl;
-  // }
-  // Scale all objects at once
-  //gobjects = obj_io.scale(WIDTH, gobjects);
-
-  // Find the light gobject, average its vertices, and use that as the light pos
-  // (but shift it down slightly first, so it doesn't lie exactly within the
-  // light object).
-  // Otherwise the light keeps its default position.
-  vector<GObject>::iterator maybeLight = find_if(gobjects.begin(), gobjects.end(), isLight);
-  if (maybeLight != gobjects.end()) {
-    light.Position = averageVerticesOfFaces((*maybeLight).faces) - vec3(0.0f, 10.0f, 0.0f);
-  }
-
-  // TODO: remove
-  // cout << "Abort before running SDL." << endl;
-  // exit(1);
+  readOBJs();
 
   window = DrawingWindow(WIDTH, HEIGHT, false);
   depthbuf = DepthBuffer(WIDTH, HEIGHT);
