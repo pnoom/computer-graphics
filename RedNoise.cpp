@@ -500,6 +500,7 @@ void draw() {
   else {
     drawGeometryViaRayTracing();
   }
+  camera.printCamera();
 }
 
 void handleEvent(SDL_Event event) {
@@ -570,6 +571,14 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_RIGHT) {
       cout << "RIGHT: PAN CAMERA RIGHT" << endl;
       camera.rotate_Y_By(1.0);
+    }
+    else if(event.key.keysym.sym == SDLK_z) {
+      cout << "Z: ROTATE CAMERA CW" << endl;
+      camera.rotate_Z_By(-1.0);
+    }
+    else if(event.key.keysym.sym == SDLK_x) {
+      cout << "X: ROTATE CAMERA ACW" << endl;
+      camera.rotate_Z_By(1.0);
     }
 
     else if(event.key.keysym.sym == SDLK_l) {

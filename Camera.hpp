@@ -11,6 +11,7 @@ class Camera {
     mat3 orientation = mat3(1, 0, 0,    // right
 			                       0, -1, 0,    // up
 			                       0, 0, -1);  // forward
+    mat3 initOrientation = orientation;
     //float focalLength = position[2] / 2;
     float focalLength = 700;
 
@@ -60,7 +61,12 @@ class Camera {
 
     void printCameraOrientation() {
       cout << "CAMERA orientation:\n";
-      for (int i = 0; i < 3; i++) printVec3(orientation[i]);
+      cout << "  RIGHT : ";
+      printVec3(orientation[0]);
+      cout << "     UP : ";
+      printVec3(orientation[1]);
+      cout << "FORWARD : ";
+      printVec3(orientation[2]);
     }
 
 };
