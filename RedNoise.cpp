@@ -474,7 +474,8 @@ void drawGeometry(bool filled) {
   }
 
   CanvasPoint lightCP = projectVertexInto2D(light.Position);
-  window.setPixelColour(lightCP.x, lightCP.y, get_rgb(BLACK));
+  if ((lightCP.x >= 0 && lightCP.x < WIDTH) && (lightCP.y >= 0 && lightCP.y < HEIGHT))
+    window.setPixelColour(lightCP.x, lightCP.y, get_rgb(BLACK));
 }
 
 void clearScreen() {
@@ -500,7 +501,7 @@ void draw() {
   else {
     drawGeometryViaRayTracing();
   }
-  camera.printCamera();
+  //camera.printCamera();
 }
 
 void handleEvent(SDL_Event event) {
