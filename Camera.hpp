@@ -6,6 +6,8 @@ using namespace std;
 
 class Camera {
   public:
+    bool safeRotating = true;
+
     vec3 position = vec3(250.0, 375.0, 750.0);
     //mat3 orientation = mat3(1.0F);
     mat3 orientation = mat3(1, 0, 0,    // right
@@ -22,8 +24,22 @@ class Camera {
       position += translationVector;
     }
 
-    void rotate_X_By(float deg) { orientation = rotMatX(deg2rad(deg)) * orientation; }
-    void rotate_Y_By(float deg) { orientation = rotMatY(deg2rad(deg)) * orientation; }
+    void rotateToNoTilt() {
+      if (!safeRotating) return;
+      float rotateScalar = 1.0f;
+      if (orientation[0][1] < 0) rotateScalar *= -1;
+      while (orientation[0][1] > 0.01f || orientation[0][1] < -0.01f)
+        rotate_Z_By(rotateScalar);
+    }
+
+    void rotate_X_By(float deg) {
+      orientation = rotMatX(deg2rad(deg)) * orientation;
+      rotateToNoTilt();
+    }
+    void rotate_Y_By(float deg) {
+      orientation = rotMatY(deg2rad(deg)) * orientation;
+      rotateToNoTilt();
+    }
     void rotate_Z_By(float deg) { orientation = rotMatZ(deg2rad(deg)) * orientation; }
 
     void printCamera() {
