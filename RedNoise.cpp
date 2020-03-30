@@ -464,6 +464,9 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
 }
 
 Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, int i, int j) {
+  std::cout << "------------------------------------------------" << "\n\n";
+  std::cout << "i: " << i << ", j: " << j << '\n';
+
   //C = ((C_0 / Z_0)(1 - q) + (C_1 / Z_1)(q)) / ((1 / Z_0)(1 - q) + (1 / Z_1)(q))
   // this formula defines perspective-corrected texture mapping
   // where C is the row of the texture image we should use.
@@ -485,6 +488,7 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
   std::cout << '\n';
 
   CanvasPoint Z_0_CP = projectVertexInto2D(iTriangle.vertices[vertex_fars]);
+  CanvasPoint Z_1_CP = projectVertexInto2D(iTriangle.vertices[vertex_clos]);
   CanvasPoint   q_CP = projectVertexInto2D(intersection.intersectionPoint);
   // q is the distance between the y coordinate of the pixel and the y coordinate of Z_0
   // ON THE CANVAS!
@@ -493,13 +497,16 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
   float Z_1 = glm::length(iTriangle.vertices[vertex_clos] - camera.position);;
   float C_0 = textureTriangle.vertices[vertex_fars].y * logoTexture.height;
   float C_1 = textureTriangle.vertices[vertex_clos].y * logoTexture.height;
-  float   q = abs(q_CP.y - Z_0_CP.y);
+  float   q = (round(Z_0_CP.y) - round(q_CP.y)) / (round(Z_0_CP.y) - round(Z_1_CP.y));
 
-  int C = round((C_0 / Z_0) * (1 - q) + (C_1 / Z_1) * (q)) / ((1 / Z_0) * (1 - q) + (1 / Z_1) * (q));
-  std::cout << "i: " << i << ", j: " << j << '\n';
-  std::cout << "  Closest Point:  " << vertex_clos << ", "; printVec3(iTriangle.vertices[vertex_clos]);
-  std::cout << "  Farthest Point: " << vertex_fars << ", "; printVec3(iTriangle.vertices[vertex_fars]);
-  std::cout << "  Z_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << ", C: " << C << '\n\n';
+  float C = (((C_0 / Z_0) * (1 - q)) + ((C_1 / Z_1) * (q))) / (((1 / Z_0) * (1 - q)) + ((1 / Z_1) * (q)));
+
+  std::cout << "Projected Z_0 CanvasPoint: " << Z_0_CP;
+  std::cout << "Projected   q CanvasPoint: " << q_CP << '\n';
+  std::cout << "Closest Point:  " << vertex_clos << ", "; printVec3(iTriangle.vertices[vertex_clos]);
+  std::cout << "Farthest Point: " << vertex_fars << ", "; printVec3(iTriangle.vertices[vertex_fars]);
+  std::cout << "\nZ_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << '\n';
+  std::cout << "C: " << C << "\n\n";
 
   return intersection.intersectedTriangle.colour;
 }
