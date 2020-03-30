@@ -291,8 +291,8 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[side2_A], triangle.vertices[side2_B]);
 
   uint last_drawn_y = round(side1.at(0).y);
-  std::cout << "Point at (" << side1.at(0).x << ", " << side1.at(0).y << "), colour " << triangle.colour;
-  std::cout << "  has texturepoints " << side1.at(0).texturePoint << " textured = " << triangle.textured << endl;
+  // std::cout << "Point at (" << side1.at(0).x << ", " << side1.at(0).y << "), colour " << triangle.colour;
+  // std::cout << "  has texturepoints " << side1.at(0).texturePoint << " textured = " << triangle.textured << endl;
   if (triangle.textured) drawTexturedLine(side1.at(0), side2.at(0));
   else drawLine(side1.at(0), side2.at(0), triangle.colour);
 
