@@ -464,6 +464,31 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
 }
 
 Colour getTextureColourFromIntersection(RayTriangleIntersection intersection) {
+  //C = ((C_0 / Z_0)(1 - q) + (C_1 / Z_1)(q)) / ((1 / Z_0)(1 - q) + (1 / Z_1)(q))
+  // this formula defines perspective-corrected texture mapping
+  // where C is the row of the texture image we should use.
+
+  int vertex_fars = 0, vertex_clos = 0;
+  float dist_clos, dist_fars, distToCam;
+  for (int i = 0; i < 3; i++) {
+    distToCam = glm::length(intersection.intersectedTriangle.vertices[i] - camera.position);
+    dist_fars = glm::length(intersection.intersectedTriangle.vertices[vertex_fars] - camera.position);
+    dist_clos = glm::length(intersection.intersectedTriangle.vertices[vertex_clos] - camera.position);
+
+    //std::cout << "Distance point " << i << " to camera: " << distToCamera << '\n';
+    if (distToCam > dist_fars) vertex_fars = i;
+    if (distToCam < dist_clos) vertex_clos = i;
+  }
+
+  TextureTriangle textureTriangle = intersection.intersectedTriangle.maybeTextureTriangle.value();
+
+  float Z_0 = glm::length(intersection.intersectedTriangle.vertices[vertex_fars] - camera.position);;
+  float Z_1 = glm::length(intersection.intersectedTriangle.vertices[vertex_clos] - camera.position);;
+  float C_0 = textureTriangle.vertices[vertex_fars].y * HEIGHT;
+  float C_1 = textureTriangle.vertices[vertex_clos].y * HEIGHT;
+
+  std::cout << "Z_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << '\n';
+
   return intersection.intersectedTriangle.colour;
 }
 
