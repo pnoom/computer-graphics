@@ -473,15 +473,16 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
   int vertex_fars = 0, vertex_clos = 0;
   float dist_clos, dist_fars, distToCam;
 
-  for (int i = 0; i < 3; i++) {
-    distToCam = glm::length(iTriangle.vertices[i] - camera.position);
+  for (int v = 0; v < 3; v++) {
+    distToCam = glm::length(iTriangle.vertices[v] - camera.position);
     dist_fars = glm::length(iTriangle.vertices[vertex_fars] - camera.position);
     dist_clos = glm::length(iTriangle.vertices[vertex_clos] - camera.position);
 
-    //std::cout << "Distance point " << i << " to camera: " << distToCamera << '\n';
-    if (distToCam > dist_fars) vertex_fars = i;
-    if (distToCam < dist_clos) vertex_clos = i;
+    std::cout << v << " to cam: " << distToCam << ", ";
+    if (distToCam > dist_fars) vertex_fars = v;
+    if (distToCam < dist_clos) vertex_clos = v;
   }
+  std::cout << '\n';
 
   CanvasPoint Z_0_CP = projectVertexInto2D(iTriangle.vertices[vertex_fars]);
   CanvasPoint   q_CP = projectVertexInto2D(intersection.intersectionPoint);
@@ -490,15 +491,15 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
 
   float Z_0 = glm::length(iTriangle.vertices[vertex_fars] - camera.position);;
   float Z_1 = glm::length(iTriangle.vertices[vertex_clos] - camera.position);;
-  float C_0 = textureTriangle.vertices[vertex_fars].y * HEIGHT;
-  float C_1 = textureTriangle.vertices[vertex_clos].y * HEIGHT;
+  float C_0 = textureTriangle.vertices[vertex_fars].y * logoTexture.height;
+  float C_1 = textureTriangle.vertices[vertex_clos].y * logoTexture.height;
   float   q = abs(q_CP.y - Z_0_CP.y);
 
   int C = round((C_0 / Z_0) * (1 - q) + (C_1 / Z_1) * (q)) / ((1 / Z_0) * (1 - q) + (1 / Z_1) * (q));
   std::cout << "i: " << i << ", j: " << j << '\n';
-  std::cout << "  Closest Point:  "; printVec3(iTriangle.vertices[vertex_clos]);
-  std::cout << "  Farthest Point: "; printVec3(iTriangle.vertices[vertex_fars]);
-  std::cout << "  Z_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << ", C: " << C << '\n';
+  std::cout << "  Closest Point:  " << vertex_clos << ", "; printVec3(iTriangle.vertices[vertex_clos]);
+  std::cout << "  Farthest Point: " << vertex_fars << ", "; printVec3(iTriangle.vertices[vertex_fars]);
+  std::cout << "  Z_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << ", C: " << C << '\n\n';
 
   return intersection.intersectedTriangle.colour;
 }
