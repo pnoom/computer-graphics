@@ -221,9 +221,11 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    //uint32_t colour = get_textured_pixel(pixel.texturePoint);
-    uint32_t colour = 0;
-    window.setPixelColour(round(x), round(y), colour);
+    uint32_t colour = get_textured_pixel(pixel.texturePoint, logoTexture);
+    if (round(x) >= 0 && round(x) < WIDTH && round(y) >= 0 && round(y) < HEIGHT) {
+      window.setPixelColour(round(x), round(y), colour);
+    }
+    //uint32_t colour = 0;
   }
 }
 
@@ -366,6 +368,8 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
     if (triangle.maybeTextureTriangle) {
       result.vertices[i].texturePoint.x = triangle.maybeTextureTriangle.value().vertices[i][0];
       result.vertices[i].texturePoint.y = triangle.maybeTextureTriangle.value().vertices[i][1];
+      result.vertices[i].texturePoint.x *= logoTexture.width;
+      result.vertices[i].texturePoint.y *= logoTexture.height;
     }
     else {
       result.vertices[i].texturePoint = TexturePoint(-1, -1);
