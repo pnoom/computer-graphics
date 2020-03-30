@@ -21,7 +21,7 @@ class CanvasPoint
       y = yPos;
       depth = 0.0;
       brightness = 1.0;
-      texturePoint = TexturePoint(modulo(xPos, 480), modulo(yPos, 395));
+      //texturePoint = TexturePoint(modulo(xPos, 100), modulo(yPos, 100));
     }
 
     CanvasPoint(float xPos, float yPos, double pointDepth)

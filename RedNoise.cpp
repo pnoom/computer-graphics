@@ -363,6 +363,13 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
   CanvasTriangle result;
   for (int i = 0; i < 3; i++) {
     result.vertices[i] = projectVertexInto2D(triangle.vertices[i]);
+    if (triangle.maybeTextureTriangle) {
+      result.vertices[i].texturePoint.x = triangle.maybeTextureTriangle.value().vertices[i][0];
+      result.vertices[i].texturePoint.y = triangle.maybeTextureTriangle.value().vertices[i][1];
+    }
+    else {
+      result.vertices[i].texturePoint = TexturePoint(-1, -1);
+    }
   }
   result.colour = triangle.colour;
 
@@ -525,7 +532,7 @@ void drawGeometry(bool filled) {
   for (uint i = 0; i < gobjects.size(); i++) {
     for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
       CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjects.at(i).faces.at(j));
-      if (filled) drawFilledTriangle(projectedTriangle, false);
+      if (filled) drawFilledTriangle(projectedTriangle, true);
       else drawStrokedTriangle(projectedTriangle);
     }
   }
