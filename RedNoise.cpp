@@ -389,7 +389,7 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
 
 // Raytracing Functions
 // ---
-RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir, glm::vec3 point, bool canCout) {
+RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec3 rayDir, glm::vec3 point) {
   glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
   glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
   glm::vec3 SPVector = point - triangle.vertices[0];
@@ -404,7 +404,7 @@ RayTriangleIntersection getPossibleIntersection(ModelTriangle triangle, glm::vec
       ((0.0f <= v) && (v <= 1.0f)) &&
       (u + v <= 1.0f) && (t >= 0)) {
         glm::vec3 point3d = triangle.vertices[0] + ((u * e0) + (v * e1));
-        RayTriangleIntersection res(point3d, t * glm::length(rayDir), triangle, true);
+        RayTriangleIntersection res(point3d, t * glm::length(rayDir), triangle, true, u, v);
         return res;
   }
 
@@ -417,7 +417,7 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 rayDir) {
   for (uint j=0; j<gobjects.size(); j++) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
-      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position, false);
+      RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
 
       if (possibleSolution.isSolution) {
         if (possibleSolution.distanceFromPoint < closestIntersectionFound.distanceFromPoint) {
@@ -450,7 +450,7 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
     for (uint i=0; i<gobjects.at(j).faces.size(); i++) {
       ModelTriangle triangle = gobjects.at(j).faces.at(i);
       if (!compareTriangles(self, triangle)) {
-        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, light.Position, true);
+        RayTriangleIntersection intersection = getPossibleIntersection(triangle, rayDir, light.Position);
         if (intersection.isSolution) {
           if (intersection.distanceFromPoint < glm::length(rayDir)) {
             return true;
@@ -463,8 +463,16 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   return false;
 }
 
+float getTextureX(RayTriangleIntersection intersection, int i, int j) {
+  // Iteratively cast out rays left and right to find the proportion of the point along the rake.
+  // Then use the edge points to calculate the proportion along that row.
+  // Interpolate using these values to get the texture point X value.
+
+  return 0.0f;
+}
+
 Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, int i, int j) {
-  std::cout << "------------------------------------------------" << "\n\n";
+  std::cout << "------------------------------------------------" << "\n";
   std::cout << "i: " << i << ", j: " << j << '\n';
 
   //C = ((C_0 / Z_0)(1 - q) + (C_1 / Z_1)(q)) / ((1 / Z_0)(1 - q) + (1 / Z_1)(q))
@@ -481,11 +489,10 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
     dist_fars = glm::length(iTriangle.vertices[vertex_fars] - camera.position);
     dist_clos = glm::length(iTriangle.vertices[vertex_clos] - camera.position);
 
-    std::cout << v << " to cam: " << distToCam << ", ";
+    //std::cout << v << " to cam: " << distToCam << ", ";
     if (distToCam > dist_fars) vertex_fars = v;
     if (distToCam < dist_clos) vertex_clos = v;
   }
-  std::cout << '\n';
 
   CanvasPoint Z_0_CP = projectVertexInto2D(iTriangle.vertices[vertex_fars]);
   CanvasPoint Z_1_CP = projectVertexInto2D(iTriangle.vertices[vertex_clos]);
@@ -501,12 +508,18 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
 
   float C = (((C_0 / Z_0) * (1 - q)) + ((C_1 / Z_1) * (q))) / (((1 / Z_0) * (1 - q)) + ((1 / Z_1) * (q)));
 
-  std::cout << "Projected Z_0 CanvasPoint: " << Z_0_CP;
-  std::cout << "Projected   q CanvasPoint: " << q_CP << '\n';
-  std::cout << "Closest Point:  " << vertex_clos << ", "; printVec3(iTriangle.vertices[vertex_clos]);
-  std::cout << "Farthest Point: " << vertex_fars << ", "; printVec3(iTriangle.vertices[vertex_fars]);
-  std::cout << "\nZ_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << '\n';
+  //std::cout << "Projected Z_0 CanvasPoint: " << Z_0_CP;
+  //std::cout << "Projected Z_1 CanvasPoint: " << Z_1_CP;
+  //std::cout << "Projected   q CanvasPoint: " << q_CP << '\n';
+  //std::cout << "Closest Point:  " << vertex_clos << ", "; printVec3(iTriangle.vertices[vertex_clos]);
+  //std::cout << "Farthest Point: " << vertex_fars << ", "; printVec3(iTriangle.vertices[vertex_fars]);
+  //std::cout << "\nZ_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << '\n';
   std::cout << "C: " << C << "\n\n";
+
+  int texture_Y = round(C);
+  int texture_X = round(getTextureX(intersection, i, j));
+
+  std::cout << "Y: " << texture_Y << ", X: " << texture_X << '\n';
 
   return intersection.intersectedTriangle.colour;
 }
