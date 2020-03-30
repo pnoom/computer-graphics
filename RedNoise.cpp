@@ -223,7 +223,7 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
     float y = pixel.y;
     uint32_t colour = get_textured_pixel(pixel.texturePoint, logoTexture);
     if (round(x) >= 0 && round(x) < WIDTH && round(y) >= 0 && round(y) < HEIGHT) {
-      window.setPixelColour(round(x), round(y), colour);
+      if (depthbuf.update(pixel)) window.setPixelColour(round(x), round(y), colour);
     }
     //uint32_t colour = 0;
   }
@@ -247,6 +247,7 @@ void equateTriangles(CanvasTriangle from, CanvasTriangle *to) {
     to->vertices[i].texturePoint = from.vertices[i].texturePoint;
   }
   to->colour = from.colour;
+  to->textured = from.textured;
 }
 
 bool compareTriangles(ModelTriangle A, ModelTriangle B) {
@@ -278,20 +279,21 @@ void getTopBottomTriangles(CanvasTriangle triangle, CanvasTriangle *top, CanvasT
   }
 
   //CONSTRUCTOR: CanvasTriangle(CanvasPoint v0, CanvasPoint v1, CanvasPoint v2, Colour c)
-  CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour);
-  CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour);
+  CanvasTriangle top_Triangle(triangle.vertices[0], point4, triangle.vertices[1], triangle.colour, triangle.textured);
+  CanvasTriangle bot_Triangle(point4, triangle.vertices[2], triangle.vertices[1], triangle.colour, triangle.textured);
 
   equateTriangles(top_Triangle, top);
   equateTriangles(bot_Triangle, bottom);
 }
 
-void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B, bool textured) {
+void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int side2_A, int side2_B) {
   std::vector<CanvasPoint> side1 = interpolate_line(triangle.vertices[side1_A], triangle.vertices[side1_B]);
   std::vector<CanvasPoint> side2 = interpolate_line(triangle.vertices[side2_A], triangle.vertices[side2_B]);
 
   uint last_drawn_y = round(side1.at(0).y);
-  std::cout << "Point at (" << side1.at(0).x << ", " << side1.at(0).y << "), colour " << triangle.colour << "  has texturepoints " << side1.at(0).texturePoint;
-  if (textured) drawTexturedLine(side1.at(0), side2.at(0));
+  std::cout << "Point at (" << side1.at(0).x << ", " << side1.at(0).y << "), colour " << triangle.colour;
+  std::cout << "  has texturepoints " << side1.at(0).texturePoint << " textured = " << triangle.textured << endl;
+  if (triangle.textured) drawTexturedLine(side1.at(0), side2.at(0));
   else drawLine(side1.at(0), side2.at(0), triangle.colour);
 
   for (uint i = 0; i < side1.size(); i++) {
@@ -300,7 +302,7 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
       while ((j < (int)side2.size() - 1) && (round(side2.at(j).y) <= last_drawn_y)) {
 	       j++;
       }
-      if (textured) drawTexturedLine(side1.at(i), side2.at(j));
+      if (triangle.textured) drawTexturedLine(side1.at(i), side2.at(j));
       else drawLine(side1.at(i), side2.at(j), triangle.colour);
       last_drawn_y++;
     }
@@ -324,7 +326,7 @@ bool triangleIsLine(CanvasTriangle triangle) {
   return false;
 }
 
-void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
+void drawFilledTriangle(CanvasTriangle triangle) {
   sortTrianglePoints(&triangle);
   CanvasTriangle triangles[2];
 
@@ -334,8 +336,8 @@ void drawFilledTriangle(CanvasTriangle triangle, bool textured) {
   }
   else {
     getTopBottomTriangles(triangle, &triangles[0], &triangles[1]);
-    fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2, textured);
-    fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1, textured);
+    fillFlatBaseTriangle(triangles[0], 0, 1, 0, 2);
+    fillFlatBaseTriangle(triangles[1], 0, 1, 2, 1);
   }
 }
 
@@ -376,7 +378,12 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
     }
   }
   result.colour = triangle.colour;
-
+  if (triangle.maybeTextureTriangle) {
+    result.textured = true;
+  }
+  else {
+    result.textured = false;
+  }
   return result;
 }
 
@@ -536,7 +543,7 @@ void drawGeometry(bool filled) {
   for (uint i = 0; i < gobjects.size(); i++) {
     for (uint j = 0; j < gobjects.at(i).faces.size(); j++) {
       CanvasTriangle projectedTriangle = projectTriangleOntoImagePlane(gobjects.at(i).faces.at(j));
-      if (filled) drawFilledTriangle(projectedTriangle, true);
+      if (filled) drawFilledTriangle(projectedTriangle);
       else drawStrokedTriangle(projectedTriangle);
     }
   }
