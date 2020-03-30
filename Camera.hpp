@@ -8,7 +8,7 @@ class Camera {
   public:
     bool safeRotating = true;
 
-    vec3 position = vec3(250.0, 375.0, 750.0);
+    vec3 position = vec3(335.0f, 415.0f, 990.0f);
     //mat3 orientation = mat3(1.0F);
     mat3 orientation = mat3(1, 0, 0,    // right
 			                       0, -1, 0,    // up

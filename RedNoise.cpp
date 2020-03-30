@@ -463,8 +463,15 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   return false;
 }
 
+Colour getTextureColourFromIntersection(RayTriangleIntersection intersection) {
+  return intersection.intersectedTriangle.colour;
+}
+
 Colour getAdjustedColour(RayTriangleIntersection intersection) {
   Colour inputColour = intersection.intersectedTriangle.colour;
+  if (intersection.intersectedTriangle.maybeTextureTriangle)
+    inputColour = getTextureColourFromIntersection(intersection);
+
   float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
   float intensity = light.getIntensityAtPoint(intersection.intersectionPoint);
   bool pointInShadow = isPointInShadow(intersection.intersectionPoint, intersection.intersectedTriangle);
