@@ -57,7 +57,7 @@ Camera camera;
 View_mode current_mode = WIRE;
 Light light;
 
-int number_of_AA_samples = 4;
+int number_of_AA_samples = 1;
 
 // Simple Helper Functions
 // ---
@@ -463,39 +463,50 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   return false;
 }
 
-Colour getTextureColourFromIntersection(RayTriangleIntersection intersection) {
+Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, int i, int j) {
   //C = ((C_0 / Z_0)(1 - q) + (C_1 / Z_1)(q)) / ((1 / Z_0)(1 - q) + (1 / Z_1)(q))
   // this formula defines perspective-corrected texture mapping
   // where C is the row of the texture image we should use.
+  ModelTriangle iTriangle =  intersection.intersectedTriangle;
+  TextureTriangle textureTriangle = iTriangle.maybeTextureTriangle.value();
 
   int vertex_fars = 0, vertex_clos = 0;
   float dist_clos, dist_fars, distToCam;
+
   for (int i = 0; i < 3; i++) {
-    distToCam = glm::length(intersection.intersectedTriangle.vertices[i] - camera.position);
-    dist_fars = glm::length(intersection.intersectedTriangle.vertices[vertex_fars] - camera.position);
-    dist_clos = glm::length(intersection.intersectedTriangle.vertices[vertex_clos] - camera.position);
+    distToCam = glm::length(iTriangle.vertices[i] - camera.position);
+    dist_fars = glm::length(iTriangle.vertices[vertex_fars] - camera.position);
+    dist_clos = glm::length(iTriangle.vertices[vertex_clos] - camera.position);
 
     //std::cout << "Distance point " << i << " to camera: " << distToCamera << '\n';
     if (distToCam > dist_fars) vertex_fars = i;
     if (distToCam < dist_clos) vertex_clos = i;
   }
 
-  TextureTriangle textureTriangle = intersection.intersectedTriangle.maybeTextureTriangle.value();
+  CanvasPoint Z_0_CP = projectVertexInto2D(iTriangle.vertices[vertex_fars]);
+  CanvasPoint   q_CP = projectVertexInto2D(intersection.intersectionPoint);
+  // q is the distance between the y coordinate of the pixel and the y coordinate of Z_0
+  // ON THE CANVAS!
 
-  float Z_0 = glm::length(intersection.intersectedTriangle.vertices[vertex_fars] - camera.position);;
-  float Z_1 = glm::length(intersection.intersectedTriangle.vertices[vertex_clos] - camera.position);;
+  float Z_0 = glm::length(iTriangle.vertices[vertex_fars] - camera.position);;
+  float Z_1 = glm::length(iTriangle.vertices[vertex_clos] - camera.position);;
   float C_0 = textureTriangle.vertices[vertex_fars].y * HEIGHT;
   float C_1 = textureTriangle.vertices[vertex_clos].y * HEIGHT;
+  float   q = abs(q_CP.y - Z_0_CP.y);
 
-  std::cout << "Z_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << '\n';
+  int C = round((C_0 / Z_0) * (1 - q) + (C_1 / Z_1) * (q)) / ((1 / Z_0) * (1 - q) + (1 / Z_1) * (q));
+  std::cout << "i: " << i << ", j: " << j << '\n';
+  std::cout << "  Closest Point:  "; printVec3(iTriangle.vertices[vertex_clos]);
+  std::cout << "  Farthest Point: "; printVec3(iTriangle.vertices[vertex_fars]);
+  std::cout << "  Z_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << ", C: " << C << '\n';
 
   return intersection.intersectedTriangle.colour;
 }
 
-Colour getAdjustedColour(RayTriangleIntersection intersection) {
+Colour getAdjustedColour(RayTriangleIntersection intersection, int i, int j) {
   Colour inputColour = intersection.intersectedTriangle.colour;
   if (intersection.intersectedTriangle.maybeTextureTriangle)
-    inputColour = getTextureColourFromIntersection(intersection);
+    inputColour = getTextureColourFromIntersection(intersection, i, j);
 
   float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
   float intensity = light.getIntensityAtPoint(intersection.intersectionPoint);
@@ -522,8 +533,8 @@ Colour getAdjustedColour(RayTriangleIntersection intersection) {
 void drawGeometryViaRayTracing() {
   mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
 
-  for (int j=0; j<HEIGHT; j++) {
-    for (int i=0; i<WIDTH; i++) {
+  for (int j = 0; j < HEIGHT; j++) {
+    for (int i = 0; i < WIDTH; i++) {
       // Note: the sign of the y value here is flipped
       //    in pixelRay and adjOrientation
       //    to ensure continuity between raytracer and rasteriser
@@ -532,29 +543,29 @@ void drawGeometryViaRayTracing() {
       int y = -j + HEIGHT / 2;
 
       glm::vec3 subPixelRays[number_of_AA_samples];
-      for (int i = 0; i < number_of_AA_samples; i++) {
+      for (int sampleIndex = 0; sampleIndex < number_of_AA_samples; sampleIndex++) {
         //Sets up the x and y sub-pixel offsets using modulo and boundary conditions
         float x_Offset = 0.25f;
         float y_Offset = 0.25f;
-        if (modulo(i, (number_of_AA_samples / 2)) == 0) x_Offset *= -1;
-        if (i >= (number_of_AA_samples / 2)) y_Offset *= -1;
-        if (i >= 4) {
+        if (modulo(sampleIndex, (number_of_AA_samples / 2)) == 0) x_Offset *= -1;
+        if (sampleIndex >= (number_of_AA_samples / 2)) y_Offset *= -1;
+        if (sampleIndex >= 4) {
           y_Offset *= 0.5f;
           x_Offset *= 0.5f;
         }
 
         glm::vec3 pr = glm::vec3(x - x_Offset, y - y_Offset, camera.focalLength);
-        subPixelRays[i] = pr;
+        subPixelRays[sampleIndex] = pr;
       }
 
       int AA_red = 0, AA_green = 0, AA_blue = 0;
 
-      for (int i = 0; i < number_of_AA_samples; i++) {
-        subPixelRays[i] = subPixelRays[i] * adjOrientation;
-        RayTriangleIntersection subPixel_RTI = getClosestIntersection(subPixelRays[i]);
+      for (int sampleIndex = 0; sampleIndex < number_of_AA_samples; sampleIndex++) {
+        subPixelRays[sampleIndex] = subPixelRays[sampleIndex] * adjOrientation;
+        RayTriangleIntersection subPixel_RTI = getClosestIntersection(subPixelRays[sampleIndex]);
 
         if (subPixel_RTI.isSolution) {
-          Colour adjustedColour = getAdjustedColour(subPixel_RTI);
+          Colour adjustedColour = getAdjustedColour(subPixel_RTI, i, j);
           AA_red += adjustedColour.red;
           AA_green += adjustedColour.green;
           AA_blue += adjustedColour.blue;
@@ -565,8 +576,23 @@ void drawGeometryViaRayTracing() {
       uint8_t avg_green = AA_green / number_of_AA_samples;
       uint8_t avg_blue = AA_blue / number_of_AA_samples;
       uint32_t avg_colour = (avg_red << 16) + (avg_green << 8) + (avg_blue);
-
       window.setPixelColour(i, j, avg_colour);
+
+      // Legacy code for simple no AA raytracer; remove?
+      /*
+      int x =  i - WIDTH / 2;
+      int y = -j + HEIGHT / 2;
+      glm::vec3 pixelRay(x, y, camera.focalLength);
+      pixelRay = pixelRay * adjOrientation;
+
+      RayTriangleIntersection RTI = getClosestIntersection(pixelRay);
+      if (RTI.isSolution) {
+        //std::cout << "Found solution with i: " << i << ", j: " << j << '\n';
+        Colour adjustedColour = getAdjustedColour(RTI, i, j);
+        window.setPixelColour(i, j, get_rgb(adjustedColour));
+      }
+      else window.setPixelColour(i, j, get_rgb(BLACK));
+      */
     }
   }
 }
