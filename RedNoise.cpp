@@ -467,8 +467,51 @@ float getTextureX(RayTriangleIntersection intersection, int i, int j) {
   // Iteratively cast out rays left and right to find the proportion of the point along the rake.
   // Then use the edge points to calculate the proportion along that row.
   // Interpolate using these values to get the texture point X value.
+  ModelTriangle triangle = intersection.intersectedTriangle;
+  mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
 
-  return 0.0f;
+  int x =  i - WIDTH / 2;
+  int y = -j + HEIGHT / 2;
+  glm::vec3 rayDir = vec3(x, y, camera.focalLength) * adjOrientation;
+  RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+
+  // LEFT
+  bool stillSolution = true;
+  float x_off = 0;
+  RayTriangleIntersection sol_L;
+
+  while (stillSolution) {
+    sol_L = possibleSolution;
+    x_off += -0.01f;
+    rayDir = vec3(x + x_off, y, camera.focalLength) * adjOrientation;
+    possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+    if (!possibleSolution.isSolution) {
+      stillSolution = false;
+    }
+  }
+
+  // RIGHT
+  stillSolution = true;
+  x_off = 0;
+  RayTriangleIntersection sol_R;
+
+  while (stillSolution) {
+    sol_R = possibleSolution;
+    x_off += 0.01f;
+    rayDir = vec3(x + x_off, y, camera.focalLength) * adjOrientation;
+    possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+    if (!possibleSolution.isSolution) {
+      stillSolution = false;
+    }
+  }
+
+  vec3 P1 = (intersection.intersectionPoint - sol_L.intersectionPoint);
+  vec3 P2 = (sol_R.intersectionPoint - sol_L.intersectionPoint);
+
+  float proportion_along_rake = glm::length(P1) / glm::length(P2);
+
+  std::cout << "proportion_along_rake" << proportion_along_rake << '\n';
+  return proportion_along_rake;
 }
 
 Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, int i, int j) {
