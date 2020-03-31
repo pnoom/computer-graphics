@@ -463,60 +463,64 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   return false;
 }
 
+RayTriangleIntersection getFarthestIntersection(ModelTriangle triangle, int x, int y, float slider) {
+  mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
+  bool stillSolution = true;
+  float x_off = 0;
+  RayTriangleIntersection sol;
+
+  glm::vec3 rayDir = vec3(x, y, camera.focalLength) * adjOrientation;
+  RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+
+  while (stillSolution) {
+    sol = possibleSolution;
+    x_off += slider;
+    rayDir = vec3(x + x_off, y, camera.focalLength) * adjOrientation;
+    possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+    if (!possibleSolution.isSolution) {
+      stillSolution = false;
+    }
+  }
+
+  return sol;
+}
+
 float getTextureX(RayTriangleIntersection intersection, int i, int j) {
   // Iteratively cast out rays left and right to find the proportion of the point along the rake.
   // Then use the edge points to calculate the proportion along that row.
   // Interpolate using these values to get the texture point X value.
   ModelTriangle triangle = intersection.intersectedTriangle;
+  TextureTriangle textureTriangle = triangle.maybeTextureTriangle.value();
   mat3 adjOrientation(camera.orientation[0], -camera.orientation[1], camera.orientation[2]);
 
   int x =  i - WIDTH / 2;
   int y = -j + HEIGHT / 2;
-  glm::vec3 rayDir = vec3(x, y, camera.focalLength) * adjOrientation;
-  RayTriangleIntersection possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
+  float slider = 0.01f;
 
-  // LEFT
-  bool stillSolution = true;
-  float x_off = 0;
-  RayTriangleIntersection sol_L;
-
-  while (stillSolution) {
-    sol_L = possibleSolution;
-    x_off += -0.01f;
-    rayDir = vec3(x + x_off, y, camera.focalLength) * adjOrientation;
-    possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
-    if (!possibleSolution.isSolution) {
-      stillSolution = false;
-    }
-  }
-
-  // RIGHT
-  stillSolution = true;
-  x_off = 0;
-  RayTriangleIntersection sol_R;
-
-  while (stillSolution) {
-    sol_R = possibleSolution;
-    x_off += 0.01f;
-    rayDir = vec3(x + x_off, y, camera.focalLength) * adjOrientation;
-    possibleSolution = getPossibleIntersection(triangle, rayDir, camera.position);
-    if (!possibleSolution.isSolution) {
-      stillSolution = false;
-    }
-  }
+  RayTriangleIntersection sol_L = getFarthestIntersection(triangle, x, y, -slider);
+  RayTriangleIntersection sol_R = getFarthestIntersection(triangle, x, y,  slider);
 
   vec3 P1 = (intersection.intersectionPoint - sol_L.intersectionPoint);
   vec3 P2 = (sol_R.intersectionPoint - sol_L.intersectionPoint);
 
-  float proportion_along_rake = glm::length(P1) / glm::length(P2);
+  float prop_along_rake = 0.0f;
+  if (glm::length(P2) != 0) prop_along_rake = glm::length(P1) / glm::length(P2);
 
-  std::cout << "proportion_along_rake" << proportion_along_rake << '\n';
-  return proportion_along_rake;
+  float prop_along_side1 = sol_L.u;
+  float prop_along_side2 = sol_R.v;
+
+  vec2 tex_1 = vec2((textureTriangle.vertices[0] * prop_along_side1) + (textureTriangle.vertices[1] * (1 - prop_along_side1)));
+  vec2 tex_2 = vec2((textureTriangle.vertices[0] * prop_along_side2) + (textureTriangle.vertices[2] * (1 - prop_along_side2)));
+
+  vec2 tex_rake = vec2((tex_1 * prop_along_rake) + (tex_2 * (1 - prop_along_rake)));
+  //std::cout << "tex_rake.x: " << tex_rake.x << '\n';
+
+  return tex_rake.x;
 }
 
 Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, int i, int j) {
-  std::cout << "------------------------------------------------" << "\n";
-  std::cout << "i: " << i << ", j: " << j << '\n';
+  //std::cout << "------------------------------------------------" << "\n";
+  //std::cout << "i: " << i << ", j: " << j << '\n';
 
   //C = ((C_0 / Z_0)(1 - q) + (C_1 / Z_1)(q)) / ((1 / Z_0)(1 - q) + (1 / Z_1)(q))
   // this formula defines perspective-corrected texture mapping
@@ -557,14 +561,19 @@ Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, in
   //std::cout << "Closest Point:  " << vertex_clos << ", "; printVec3(iTriangle.vertices[vertex_clos]);
   //std::cout << "Farthest Point: " << vertex_fars << ", "; printVec3(iTriangle.vertices[vertex_fars]);
   //std::cout << "\nZ_0: " << Z_0 << ", Z_1: " << Z_1 << ", C_0: " << C_0 << ", C_1: " << C_1 << ", q: " << q << '\n';
-  std::cout << "C: " << C << "\n\n";
+  //std::cout << "C: " << C << "\n\n";
 
   int texture_Y = round(C);
-  int texture_X = round(getTextureX(intersection, i, j));
+  int texture_X = round(getTextureX(intersection, i, j) * logoTexture.width);
 
-  std::cout << "Y: " << texture_Y << ", X: " << texture_X << '\n';
+  //std::cout << "proportion_along_rake: " << proportion_along_rake << '\n';
+  //std::cout << "Y: " << texture_Y << ", X: " << texture_X << '\n';
 
-  return intersection.intersectedTriangle.colour;
+  uint32_t texpix = logoTexture.ppm_image[texture_X + (texture_Y * logoTexture.width)];
+  uint8_t red   = (texpix >> 16) & 0xFF;
+  uint8_t green = (texpix >> 8) & 0xFF;
+  uint8_t blue  = (texpix) & 0xFF;
+  return Colour(red, green, blue);
 }
 
 Colour getAdjustedColour(RayTriangleIntersection intersection, int i, int j) {
