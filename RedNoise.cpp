@@ -42,7 +42,7 @@ Colour WHITE = Colour(255, 255, 255);
 Colour BLACK = Colour(0, 0, 0);
 
 typedef enum {WIRE, RASTER, RAY} View_mode;
-
+typedef enum {WINDOW, TEXTURE} Draw_buf;
 // Global Object Declarations
 // ---
 
@@ -50,11 +50,13 @@ OBJ_IO obj_io;
 std::vector<GObject> gobjects;
 DrawingWindow window;
 
+uint32_t *texture_buffer;
 Texture logoTexture;
 
 DepthBuffer depthbuf;
 Camera camera;
-View_mode current_mode = WIRE;
+View_mode current_mode;
+Draw_buf buf_mode;
 Light light;
 
 int number_of_AA_samples = 1;
@@ -200,6 +202,7 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
 }
 
 void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
+  if (buf_mode == TEXTURE) return;
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
 
   for (uint i = 0; i < interp_line.size(); i++) {
@@ -223,7 +226,14 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
     float y = pixel.y;
     uint32_t colour = get_textured_pixel(pixel.texturePoint, logoTexture);
     if (round(x) >= 0 && round(x) < WIDTH && round(y) >= 0 && round(y) < HEIGHT) {
-      if (depthbuf.update(pixel)) window.setPixelColour(round(x), round(y), colour);
+      if (depthbuf.update(pixel)) {
+        if (buf_mode == WINDOW) {
+          window.setPixelColour(round(x), round(y), colour);
+        }
+        else if (buf_mode == TEXTURE) {
+          texture_buffer[(int)(round(x) + (WIDTH * round(y)))] = colour;
+        }
+      }
     }
     //uint32_t colour = 0;
   }
@@ -463,15 +473,20 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   return false;
 }
 
-Colour getTextureColourFromIntersection(RayTriangleIntersection intersection, int i, int j) {
+Colour getTextureColourFromIntersection(int i, int j) {
+  uint32_t intCol = texture_buffer[i + (WIDTH * j)];
+  uint8_t red = (intCol >> 16) && 0xff;
+  uint8_t green = (intCol >> 8) && 0xff;
+  uint8_t blue = (intCol) && 0xff;
 
-  return BLACK;
+  Colour res(red, green, blue);
+  return res;
 }
 
 Colour getAdjustedColour(RayTriangleIntersection intersection, int i, int j) {
   Colour inputColour = intersection.intersectedTriangle.colour;
   if (intersection.intersectedTriangle.maybeTextureTriangle)
-    inputColour = getTextureColourFromIntersection(intersection, i, j);
+    inputColour = getTextureColourFromIntersection(i, j);
 
   float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
   float intensity = light.getIntensityAtPoint(intersection.intersectionPoint);
@@ -597,6 +612,9 @@ void draw() {
     drawGeometry(true);
   }
   else {
+    buf_mode = TEXTURE;
+    drawGeometry(true);
+    buf_mode = WINDOW;
     drawGeometryViaRayTracing();
   }
   //camera.printCamera();
@@ -701,9 +719,11 @@ int main(int argc, char* argv[]) {
   // are not allowed (so no print statements, or anything, basically)
   readOBJs();
 
+  texture_buffer = (uint32_t*)malloc(WIDTH*HEIGHT*sizeof(uint32_t));
   window = DrawingWindow(WIDTH, HEIGHT, false);
   depthbuf = DepthBuffer(WIDTH, HEIGHT);
-
+  buf_mode = WINDOW;
+  current_mode = WIRE;
   screenshotDir = SCREENSHOT_DIR;
   fs::create_directory(screenshotDir); // ensure it exists
 
