@@ -141,29 +141,24 @@ vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
 }
 
 void readOBJs() {
-  vector<GObject> cornell;
+  vector<GObject> scene;
   vector<GObject> logo;
 
   // This tuple/optional nonsense is just to avoid changing OBJ_IO/Structure too much.
   // For each obj file we load, it may have a texture file. We should have a global
   // variable for each texture that we know will actually exist and set it to the
   // value of the optional here.
-  optional<Texture> maybeTexture; // we know there isn't one, but this shows the usage
-  optional<Texture> maybeLogoTexture;
+  optional<Texture> maybeTexture;
 
-  tie(cornell, maybeTexture) = obj_io.loadOBJ("jamdy.obj");
-  cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
+  tie(scene, maybeTexture) = obj_io.loadOBJ("jamdy.obj");
+  scene = obj_io.scale(WIDTH, scene);  // scale each file's objects separately
   if (maybeTexture) textures.push_back(maybeTexture.value());
+
   tie(logo, maybeTexture) = obj_io.loadOBJ("logo.obj");
-  //
-  // if (maybeTexture)
-  //   jamdyTexture = maybeCornellTexture.value();
-  //
-  // if (maybeLogoTexture)
-  //   logoTexture = maybeLogoTexture.value();
   logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
   if (maybeTexture) textures.push_back(maybeTexture.value());
-  gobjects = joinGObjectVectors(cornell, logo);
+
+  gobjects = joinGObjectVectors(scene, logo);
 
   // Find the light gobject, average its vertices, and use that as the light pos
   // (but shift it down slightly first, so it doesn't lie exactly within the
