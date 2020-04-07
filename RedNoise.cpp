@@ -52,6 +52,7 @@ DrawingWindow window;
 
 uint32_t *texture_buffer;
 Texture logoTexture;
+Texture jamdyTexture;
 
 DepthBuffer depthbuf;
 Camera camera;
@@ -59,7 +60,7 @@ View_mode current_mode;
 Draw_buf buf_mode;
 Light light;
 
-int number_of_AA_samples = 4;
+int number_of_AA_samples = 1;
 
 // Simple Helper Functions
 // ---
@@ -152,6 +153,9 @@ void readOBJs() {
   cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
   tie(logo, maybeLogoTexture) = obj_io.loadOBJ("logo.obj");
 
+  if (maybeCornellTexture)
+    jamdyTexture = maybeCornellTexture.value();
+    
   if (maybeLogoTexture)
     logoTexture = maybeLogoTexture.value();
   logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
