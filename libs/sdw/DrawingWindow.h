@@ -8,9 +8,9 @@ private:
   SDL_Window *window;
   SDL_Renderer *renderer;
   SDL_Texture *texture;
-  uint32_t *pixelBuffer;
 
 public:
+  uint32_t *pixelBuffer;
   int height;
   int width;
 
