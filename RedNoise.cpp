@@ -148,7 +148,7 @@ void readOBJs() {
   optional<Texture> maybeCornellTexture; // we know there isn't one, but this shows the usage
   optional<Texture> maybeLogoTexture;
 
-  tie(cornell, maybeCornellTexture) = obj_io.loadOBJ("cornell-box.obj");
+  tie(cornell, maybeCornellTexture) = obj_io.loadOBJ("jamdy.obj");
   cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
   tie(logo, maybeLogoTexture) = obj_io.loadOBJ("logo.obj");
 
