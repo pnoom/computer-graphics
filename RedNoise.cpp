@@ -230,7 +230,7 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
         if (buf_mode == WINDOW) {
           window.setPixelColour(round(x), round(y), colour);
         }
-        else if (buf_mode == TEXTURE) {
+        else {
           texture_buffer[(int)(round(x) + (WIDTH * round(y)))] = colour;
         }
       }
@@ -475,11 +475,12 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
 
 Colour getTextureColourFromIntersection(int i, int j) {
   uint32_t intCol = texture_buffer[i + (WIDTH * j)];
-  uint8_t red = (intCol >> 16) && 0xff;
-  uint8_t green = (intCol >> 8) && 0xff;
-  uint8_t blue = (intCol) && 0xff;
+  uint8_t red = (intCol >> 16) & 0xff;
+  uint8_t green = (intCol >> 8) & 0xff;
+  uint8_t blue = (intCol) & 0xff;
 
   Colour res(red, green, blue);
+  // cout << res << endl;
   return res;
 }
 
