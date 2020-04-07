@@ -3,6 +3,7 @@
 class TexturePoint
 {
   public:
+    string textureName;
     float x;
     float y;
 
@@ -14,6 +15,14 @@ class TexturePoint
     {
       x = xPos;
       y = yPos;
+      textureName = "UNASSIGNED";
+    }
+
+    TexturePoint(float xPos, float yPos, string tn)
+    {
+      x = xPos;
+      y = yPos;
+      textureName = tn;
     }
 
     void print()

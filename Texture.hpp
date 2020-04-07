@@ -5,6 +5,7 @@
 
 class Texture {
   public:
+    string textureFilename;
     uint32_t* ppm_image;
     int width, height;
     int maxcolour;
@@ -12,6 +13,7 @@ class Texture {
     Texture() {}
 
     Texture(std::string imageName) {
+      textureFilename = imageName;
       FILE* f = fopen(imageName.c_str(), "r");
       char buf[64];
 

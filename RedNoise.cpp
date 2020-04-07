@@ -51,8 +51,10 @@ std::vector<GObject> gobjects;
 DrawingWindow window;
 
 uint32_t *texture_buffer;
-Texture logoTexture;
-Texture jamdyTexture;
+
+std::vector<Texture> textures;
+//Texture logoTexture;
+//Texture jamdyTexture;
 
 DepthBuffer depthbuf;
 Camera camera;
@@ -146,19 +148,21 @@ void readOBJs() {
   // For each obj file we load, it may have a texture file. We should have a global
   // variable for each texture that we know will actually exist and set it to the
   // value of the optional here.
-  optional<Texture> maybeCornellTexture; // we know there isn't one, but this shows the usage
+  optional<Texture> maybeTexture; // we know there isn't one, but this shows the usage
   optional<Texture> maybeLogoTexture;
 
-  tie(cornell, maybeCornellTexture) = obj_io.loadOBJ("jamdy.obj");
+  tie(cornell, maybeTexture) = obj_io.loadOBJ("jamdy.obj");
   cornell = obj_io.scale(WIDTH, cornell);  // scale each file's objects separately
-  tie(logo, maybeLogoTexture) = obj_io.loadOBJ("logo.obj");
-
-  if (maybeCornellTexture)
-    jamdyTexture = maybeCornellTexture.value();
-    
-  if (maybeLogoTexture)
-    logoTexture = maybeLogoTexture.value();
+  if (maybeTexture) textures.push_back(maybeTexture.value());
+  tie(logo, maybeTexture) = obj_io.loadOBJ("logo.obj");
+  //
+  // if (maybeTexture)
+  //   jamdyTexture = maybeCornellTexture.value();
+  //
+  // if (maybeLogoTexture)
+  //   logoTexture = maybeLogoTexture.value();
   logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
+  if (maybeTexture) textures.push_back(maybeTexture.value());
   gobjects = joinGObjectVectors(cornell, logo);
 
   // Find the light gobject, average its vertices, and use that as the light pos
@@ -198,7 +202,7 @@ std::vector<CanvasPoint> interpolate_line(CanvasPoint from, CanvasPoint to) {
   std::vector<CanvasPoint> v;
   for (float i = 0.0; i < no_steps; i++) {
     CanvasPoint interp_point(from.x + (i * stepSize_X), from.y + (i * stepSize_Y), from.depth + (i * stepSize_dep));
-    TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y));
+    TexturePoint interp_tp(from.texturePoint.x + (i * stepSize_tp_X), from.texturePoint.y + (i * stepSize_tp_Y), to.texturePoint.textureName);
     interp_point.texturePoint = interp_tp;
     v.push_back(interp_point);
   }
@@ -217,8 +221,13 @@ void drawLine(CanvasPoint P1, CanvasPoint P2, Colour colour) {
   }
 }
 
-uint32_t get_textured_pixel(TexturePoint texturePoint, Texture texture) {
- return texture.ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * texture.width))];
+uint32_t get_textured_pixel(TexturePoint texturePoint) {
+  //std::cout << "Texture name: " << texturePoint.textureName << '\n';
+  for (uint i = 0; i < textures.size(); i++) {
+    if (textures.at(i).textureFilename == texturePoint.textureName)
+      return textures.at(i).ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * textures.at(i).width))];
+  }
+  return textures.at(0).ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * textures.at(0).width))];
 }
 
 void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
@@ -228,7 +237,7 @@ void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
     CanvasPoint pixel = interp_line.at(i);
     float x = pixel.x;
     float y = pixel.y;
-    uint32_t colour = get_textured_pixel(pixel.texturePoint, logoTexture);
+    uint32_t colour = get_textured_pixel(pixel.texturePoint);
     if (round(x) >= 0 && round(x) < WIDTH && round(y) >= 0 && round(y) < HEIGHT) {
       if (depthbuf.update(pixel)) {
         if (buf_mode == WINDOW) {
@@ -379,16 +388,27 @@ CanvasPoint projectVertexInto2D(glm::vec3 v) {
 
 CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
   CanvasTriangle result;
+
+  Texture t;
+  if (triangle.maybeTextureTriangle) {
+    for (uint j = 0; j < textures.size(); j++) {
+      if (triangle.maybeTextureTriangle.value().textureFilename == textures.at(j).textureFilename)
+        t = textures.at(j);
+    }
+  }
+
   for (int i = 0; i < 3; i++) {
     result.vertices[i] = projectVertexInto2D(triangle.vertices[i]);
     if (triangle.maybeTextureTriangle) {
+
       result.vertices[i].texturePoint.x = triangle.maybeTextureTriangle.value().vertices[i][0];
       result.vertices[i].texturePoint.y = triangle.maybeTextureTriangle.value().vertices[i][1];
-      result.vertices[i].texturePoint.x *= logoTexture.width;
-      result.vertices[i].texturePoint.y *= logoTexture.height;
+      result.vertices[i].texturePoint.x *= t.width;
+      result.vertices[i].texturePoint.y *= t.height;
+      result.vertices[i].texturePoint.textureName = triangle.maybeTextureTriangle.value().textureFilename;
     }
     else {
-      result.vertices[i].texturePoint = TexturePoint(-1, -1);
+      result.vertices[i].texturePoint = TexturePoint(-1, -1, "UNASSIGNED");
     }
   }
   result.colour = triangle.colour;
