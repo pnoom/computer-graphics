@@ -59,7 +59,7 @@ View_mode current_mode;
 Draw_buf buf_mode;
 Light light;
 
-int number_of_AA_samples = 1;
+int number_of_AA_samples = 4;
 
 // Simple Helper Functions
 // ---
@@ -473,7 +473,7 @@ bool isPointInShadow(glm::vec3 point, ModelTriangle self) {
   return false;
 }
 
-Colour getTextureColourFromIntersection(int i, int j) {
+Colour getTextureColourFromRasterizer(int i, int j) {
   uint32_t intCol = texture_buffer[i + (WIDTH * j)];
   uint8_t red = (intCol >> 16) & 0xff;
   uint8_t green = (intCol >> 8) & 0xff;
@@ -487,7 +487,7 @@ Colour getTextureColourFromIntersection(int i, int j) {
 Colour getAdjustedColour(RayTriangleIntersection intersection, int i, int j) {
   Colour inputColour = intersection.intersectedTriangle.colour;
   if (intersection.intersectedTriangle.maybeTextureTriangle)
-    inputColour = getTextureColourFromIntersection(i, j);
+    inputColour = getTextureColourFromRasterizer(i, j);
 
   float AOI = getAngleOfIncidence(intersection.intersectionPoint, intersection.intersectedTriangle);
   float intensity = light.getIntensityAtPoint(intersection.intersectionPoint);
