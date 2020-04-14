@@ -151,11 +151,12 @@ void readOBJs() {
   optional<Texture> maybeTexture;
 
   tie(scene, maybeTexture) = obj_io.loadOBJ("jamdy.obj");
-  scene = obj_io.scale(WIDTH, scene);  // scale each file's objects separately
+  scene = obj_io.scale_additive(scene);
+  //scene = obj_io.scale_multiplicative(WIDTH, scene);
   if (maybeTexture) textures.push_back(maybeTexture.value());
 
   tie(logo, maybeTexture) = obj_io.loadOBJ("logo.obj");
-  logo = obj_io.scale(WIDTH, logo);        // scale each file's objects separately
+  logo = obj_io.scale_additive(logo);
   if (maybeTexture) textures.push_back(maybeTexture.value());
 
   gobjects = joinGObjectVectors(scene, logo);

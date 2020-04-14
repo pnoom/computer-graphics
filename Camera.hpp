@@ -8,11 +8,16 @@ class Camera {
   public:
     bool safeRotating = true;
 
-    vec3 position = vec3(335.0f, 415.0f, 990.0f);
-    //mat3 orientation = mat3(1.0F);
-    mat3 orientation = mat3(1, 0, 0,    // right
-			                       0, -1, 0,    // up
-			                       0, 0, -1);  // forward
+    vec3 position = vec3(2010.f, 995.f, 2660.f);
+    //mat3 orientation = mat3(1, 0, 0,    // right
+    //                             0, -1, 0,    // up
+    //                             0, 0, -1);  // forward
+    mat3 orientation = mat3(
+      0.82307, 0.000211424, -0.567942,
+      0.130251, -0.973418, 0.1884,
+      -0.552805, -0.229041, -0.801218
+    );
+    // vec3 position = vec3(335.0f, 415.0f, 990.0f);
     mat3 initOrientation = orientation;
     //float focalLength = position[2] / 2;
     float focalLength = 700;
