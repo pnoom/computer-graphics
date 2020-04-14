@@ -158,6 +158,7 @@ void readOBJs() {
 
   tie(logo, maybeTexture) = obj_io.loadOBJ("logo.obj");
   logo = obj_io.scale_additive(logo);
+  logo = obj_io.scale_multiplicative(1000, logo);
   if (maybeTexture) textures.push_back(maybeTexture.value());
 
   tie(teapot, maybeTexture) = obj_io.loadOBJ("teapot200.obj");
@@ -747,6 +748,11 @@ int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
   readOBJs();
+
+  for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
+    cout << "g.name " << (*g).name << " g.avg ";
+    printVec3(averageVerticesOfFaces((*g).faces));
+  }
 
   texture_buffer = (uint32_t*)malloc(WIDTH*HEIGHT*sizeof(uint32_t));
   window = DrawingWindow(WIDTH, HEIGHT, false);
