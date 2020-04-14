@@ -102,9 +102,8 @@ class OBJ_IO {
       return (lineString.empty() || lineString.front() == '#');
     }
 
-    faceData processFaceLine(istringstream& lineStream) {
+    faceData processFaceLine(istringstream& lineStream, OBJ_Structure structure) {
       string faceTerm;
-      int numRead;
       vec3_int vindices;
       vec3_int tindices;
       // vec3_int nindices;
@@ -115,8 +114,8 @@ class OBJ_IO {
       // Repeatedly get "v1/vt1/vn1" or similar, then parse /-delimited ints.
       // Ignore vector normals for now.
       while (lineStream >> faceTerm) {
-        numRead = sscanf(faceTerm.c_str(), "%d/%d", &vindices[i], &tindices[i]); // nindices[i]
-        if (numRead == 1) vts = false;
+        sscanf(faceTerm.c_str(), "%d/%d", &vindices[i], &tindices[i]); // nindices[i]
+        if (structure.textureFilename.empty()) vts = false;
         i += 1;
       }
       // Don't forget to subtract one from all the indices, since OBJ files use
@@ -218,7 +217,7 @@ class OBJ_IO {
           structure.allTextureVertices.push_back(textureVertex);
         }
         else if (linePrefix == "f") {
-          face = processFaceLine(lineStream);
+          face = processFaceLine(lineStream, structure);
           structure.faceDict.insert({currentObjName, face});
         }
         else if (linePrefix == "o") {

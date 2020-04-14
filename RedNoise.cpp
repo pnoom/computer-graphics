@@ -230,7 +230,8 @@ uint32_t get_textured_pixel(TexturePoint texturePoint) {
     if (textures.at(i).textureFilename == texturePoint.textureName)
       return textures.at(i).ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * textures.at(i).width))];
   }
-  return textures.at(0).ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * textures.at(0).width))];
+  return ((255 << 16) + 255);
+  //return textures.at(0).ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * textures.at(0).width))];
 }
 
 void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
@@ -329,7 +330,9 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
 	       j++;
       }
       if (triangle.textured) drawTexturedLine(side1.at(i), side2.at(j));
-      else drawLine(side1.at(i), side2.at(j), triangle.colour);
+      else {
+        drawLine(side1.at(i), side2.at(j), triangle.colour);
+      }
       last_drawn_y++;
     }
   }
@@ -415,11 +418,9 @@ CanvasTriangle projectTriangleOntoImagePlane(ModelTriangle triangle) {
     }
   }
   result.colour = triangle.colour;
+  result.textured = false;
   if (triangle.maybeTextureTriangle) {
     result.textured = true;
-  }
-  else {
-    result.textured = false;
   }
   return result;
 }
