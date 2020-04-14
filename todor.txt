@@ -1,0 +1,13 @@
+
+TODO:
+  - function to rotate a gobject
+  - set up the initial camera position and orientation
+  - set up the scene
+    - move light
+    - move teapot
+  - function to rotate the camera around a POI
+  - set up a loop to iterate through frames and take screenies, then move the camera
+  - fix teapot texture vertices (between 0 and 1)
+  - rename RedNoise.cpp
+  - recolour the back wall
+  - set up a moving light
