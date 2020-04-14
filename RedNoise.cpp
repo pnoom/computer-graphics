@@ -156,17 +156,17 @@ void readOBJs() {
   //scene = obj_io.scale_multiplicative(WIDTH, scene);
   if (maybeTexture) textures.push_back(maybeTexture.value());
 
-  //tie(logo, maybeTexture) = obj_io.loadOBJ("logo.obj");
-  //logo = obj_io.scale_additive(logo);
-  //if (maybeTexture) textures.push_back(maybeTexture.value());
+  tie(logo, maybeTexture) = obj_io.loadOBJ("logo.obj");
+  logo = obj_io.scale_additive(logo);
+  if (maybeTexture) textures.push_back(maybeTexture.value());
 
   tie(teapot, maybeTexture) = obj_io.loadOBJ("teapot200.obj");
   teapot = obj_io.scale_additive(teapot);
   teapot = obj_io.scale_multiplicative(WIDTH, teapot);
   if (maybeTexture) textures.push_back(maybeTexture.value());
 
-  //gobjects = joinGObjectVectors(scene, logo);
-  gobjects = joinGObjectVectors(scene, teapot);
+  gobjects = joinGObjectVectors(scene, logo);
+  gobjects = joinGObjectVectors(gobjects, teapot);
 
   // Find the light gobject, average its vertices, and use that as the light pos
   // (but shift it down slightly first, so it doesn't lie exactly within the
