@@ -140,6 +140,16 @@ vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
   return accVerts / (float)numVerts;
 }
 
+void translateGObject(vec3 translationVector, GObject &gobject) {
+  for (uint i = 0; i < gobject.faces.size(); i++) {
+    for (uint j = 0; j < 3; j++) {
+      gobject.faces.at(i).vertices[j].x += translationVector.x;
+      gobject.faces.at(i).vertices[j].y += translationVector.y;
+      gobject.faces.at(i).vertices[j].z += translationVector.z;
+    }
+  }
+}
+
 void readOBJs() {
   vector<GObject> scene;
   vector<GObject> logo;
@@ -748,6 +758,10 @@ int main(int argc, char* argv[]) {
   // Initialise globals here, not at top of file, because there, statements
   // are not allowed (so no print statements, or anything, basically)
   readOBJs();
+
+  for(uint i = 0; i < gobjects.size(); i++) {
+    if ((gobjects.at(i)).name == "logo") translateGObject(vec3(0.0, 150.0, 700.0), (gobjects.at(i)));
+  }
 
   for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
     cout << "g.name " << (*g).name << " g.avg ";
