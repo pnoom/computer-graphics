@@ -72,6 +72,16 @@ int modulo(int x, int y) { if (y == 0) return x; return ((x % y) + x) % y; }
 bool comparator(CanvasPoint p1, CanvasPoint p2) { return (p1.y < p2.y); }
 void printVec3(vec3 v) { cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n"; }
 bool isLight(GObject gobj) { return (gobj.name == "light"); }
+glm::mat3 rotMatX(float angle) { return mat3(1,0,0, 0,cos(angle),-sin(angle), 0,sin(angle),cos(angle)); }
+glm::mat3 rotMatY(float angle) { return mat3(cos(angle),0,sin(angle), 0,1,0, -sin(angle),0,cos(angle)); }
+glm::mat3 rotMatZ(float angle) { return mat3(cos(angle),-sin(angle),0, sin(angle),cos(angle),0, 0,0,1); }
+float deg2rad(float deg) { return (deg * M_PI) / 180; }
+
+void printMat3(mat3 m) {
+  printVec3(m[0]);
+  printVec3(m[1]);
+  printVec3(m[2]);
+}
 
 uint32_t get_rgb(Colour colour) { return (0 << 24) + (colour.red << 16) + (colour.green << 8) + colour.blue; }
 uint32_t get_rgb(vec3 rgb) { return (uint32_t)((255<<24) + (int(rgb[0])<<16) + (int(rgb[1])<<8) + int(rgb[2])); }
@@ -140,6 +150,14 @@ vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
   return accVerts / (float)numVerts;
 }
 
+GObject& getGObjectByName(string gobjectName) {
+  for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
+    if ((*g).name == gobjectName) return (*g);
+  }
+  cout << "Couldn't find a gobject called '" << gobjectName << "'." << endl;
+  exit(1);
+}
+
 vec3 getCentreOf(string gobjectName) {
   for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
     if ((*g).name == gobjectName) return averageVerticesOfFaces((*g).faces);
@@ -156,6 +174,32 @@ void translateGObject(vec3 translationVector, GObject &gobject) {
       gobject.faces.at(i).vertices[j].z += translationVector.z;
     }
   }
+}
+
+void translateGObjectToOrigin(GObject &gobject) {
+  vec3 objCentre = averageVerticesOfFaces(gobject.faces);
+  translateGObject(-objCentre, gobject);
+}
+
+void rotateGObjectAboutY(float deg, GObject &gobject) {
+  mat3 transform = rotMatY(deg2rad(deg));
+  //printMat3(transform);
+  for (uint i = 0; i < gobject.faces.size(); i++) {
+    for (uint j = 0; j < 3; j++) {
+      gobject.faces.at(i).vertices[j] = transform * gobject.faces.at(i).vertices[j];
+    }
+  }
+}
+
+void rotateGObjectAboutYInPlace(float deg, GObject &gobject) {
+  vec3 objCentre = averageVerticesOfFaces(gobject.faces);
+  translateGObject(-objCentre, gobject);
+  rotateGObjectAboutY(deg, gobject);
+  translateGObject(objCentre, gobject);
+}
+
+void rotateTeaPot(float deg) {
+  rotateGObjectAboutYInPlace(deg, getGObjectByName("teapot"));
 }
 
 void readOBJs() {
@@ -760,6 +804,11 @@ void handleEvent(SDL_Event event) {
       camera.moveAlongAnimArc(10.0f);
       camera.lookAt(getCentreOf("logo"));
     }
+    else if(event.key.keysym.sym == SDLK_t) {
+      cout << "T: ROTATE TEAPOT" << endl;
+      // Should be -ve, but whatever
+      rotateTeaPot(10.0f);
+    }
     if (clear)
       clearScreen();
     else
@@ -775,6 +824,9 @@ int main(int argc, char* argv[]) {
 
   for(uint i = 0; i < gobjects.size(); i++) {
     if ((gobjects.at(i)).name == "logo") translateGObject(vec3(0.0, 150.0, 700.0), (gobjects.at(i)));
+    // if ((gobjects.at(i)).name == "teapot") {
+    //   rotateGObjectAboutYInPlace(225.0f, gobjects.at(i));
+    // }
   }
 
   for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
