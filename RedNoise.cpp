@@ -299,7 +299,12 @@ uint32_t get_textured_pixel(TexturePoint texturePoint) {
   //return textures.at(0).ppm_image[(int)(round(texturePoint.x) + (round(texturePoint.y) * textures.at(0).width))];
 }
 
-void drawTexturedLine(CanvasPoint P1, CanvasPoint P2) {
+void drawTexturedLine(CanvasPoint P1, CanvasPoint P2, CanvasTriangle triangle) {
+  if (triangle.colour.name == "material_0") {
+    P1.texturePoint.x = 0.0f;
+    P2.texturePoint.x = 64.0f;
+  }
+
   std::vector<CanvasPoint> interp_line = interpolate_line(P1, P2);
 
   for (uint i = 0; i < interp_line.size(); i++) {
@@ -385,7 +390,7 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
   uint last_drawn_y = round(side1.at(0).y);
   // std::cout << "Point at (" << side1.at(0).x << ", " << side1.at(0).y << "), colour " << triangle.colour;
   // std::cout << "  has texturepoints " << side1.at(0).texturePoint << " textured = " << triangle.textured << endl;
-  if (triangle.textured) drawTexturedLine(side1.at(0), side2.at(0));
+  if (triangle.textured) drawTexturedLine(side1.at(0), side2.at(0), triangle);
   else drawLine(side1.at(0), side2.at(0), triangle.colour);
 
   for (uint i = 0; i < side1.size(); i++) {
@@ -394,7 +399,7 @@ void fillFlatBaseTriangle(CanvasTriangle triangle, int side1_A, int side1_B, int
       while ((j < (int)side2.size() - 1) && (round(side2.at(j).y) <= last_drawn_y)) {
 	       j++;
       }
-      if (triangle.textured) drawTexturedLine(side1.at(i), side2.at(j));
+      if (triangle.textured) drawTexturedLine(side1.at(i), side2.at(j), triangle);
       else {
         drawLine(side1.at(i), side2.at(j), triangle.colour);
       }
@@ -828,8 +833,8 @@ void handleEvent(SDL_Event event) {
 
   while (animating) {
 
-    if (camera.position.x <= 750.0f || camera.position.x > 4000.0f
-        || camera.position.z <= 750.0f || camera.position.z > 4000.0f) {
+    if (camera.position.x <= 740.0f || camera.position.x > 4000.0f
+        || camera.position.z <= 740.0f || camera.position.z > 4000.0f) {
       //camera.printCamera();
       animating = false;
       std::cout << "\nFINISHED!\n";
@@ -861,10 +866,16 @@ int main(int argc, char* argv[]) {
   readOBJs();
 
   for(uint i = 0; i < gobjects.size(); i++) {
-    if ((gobjects.at(i)).name == "logo") translateGObject(vec3(0.0, 150.0, 700.0), (gobjects.at(i)));
+    if ((gobjects.at(i)).name == "logo") {
+      translateGObject(vec3(0.0, 150.0, 700.0), (gobjects.at(i)));
+      vec3 avgLogo = getCentreOf("logo");
+      camera.position[1] = avgLogo[1];
+      camera.position[2] = avgLogo[2];
+    }
     // if ((gobjects.at(i)).name == "teapot") {
     //   rotateGObjectAboutYInPlace(225.0f, gobjects.at(i));
     // }
+
   }
 
   for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
