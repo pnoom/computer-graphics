@@ -55,7 +55,7 @@ window:
 
 # This assumes that the screenies directory already contains the images
 animation:
-	$(shell cd screenies && ffmpeg -framerate 24 -i %05d.ppm -c:v mpeg4 -q 5 out.mp4 -y && cd ..)
+	$(shell cd screenies && ffmpeg -framerate 24 -i %05d.ppm -c:v libxvid -q 1 out.mp4 -y && cd ..)
 
 # Files to remove during clean
 clean:
