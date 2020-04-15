@@ -64,7 +64,7 @@ Light light;
 bool animating = false;
 
 int number_of_AA_samples = 1;
-
+int frame_no = 0;
 // Simple Helper Functions
 // ---
 float max(float A, float B) { if (A > B) return A; return B; }
@@ -812,6 +812,7 @@ void handleEvent(SDL_Event event) {
     else if(event.key.keysym.sym == SDLK_g) {
       cout << "G: GO (START ANIMATION)" << endl;
       animating = true;
+      frame_no = 0;
     }
     else if(event.key.keysym.sym == SDLK_h) {
       cout << "H: HALT (STOP ANIMATION)" << endl;
@@ -825,14 +826,17 @@ void handleEvent(SDL_Event event) {
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 
   while (animating) {
+
     if (camera.position.x <= 750.0f || camera.position.x > 4000.0f
         || camera.position.z <= 750.0f || camera.position.z > 4000.0f) {
       //camera.printCamera();
       animating = false;
+      std::cout << "\nFINISHED!\n";
     }
     else {
       if(window.pollForInputEvents(&event)) handleEvent(event);
-
+      frame_no ++;
+      std::cout << "Drawn frame " << frame_no << "; ";
       draw();
       //writePPM();
       // Wait for the PPM to be written. Increase this value for raster/raytrace
