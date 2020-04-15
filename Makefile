@@ -53,6 +53,10 @@ speedy: window
 window:
 	$(COMPILER) $(COMPILER_OPTIONS) -o $(WINDOW_OBJECT) $(WINDOW_SOURCE) $(SDL_COMPILER_FLAGS) $(GLM_COMPILER_FLAGS)
 
+# This assumes that the screenies directory already contains the images
+animation:
+	$(shell cd screenies && ffmpeg -framerate 24 -i %05d.ppm -c:v mpeg4 -q 5 out.mp4 -y && cd ..)
+
 # Files to remove during clean
 clean:
 	rm $(OBJECT_FILE)
