@@ -835,17 +835,20 @@ void handleEvent(SDL_Event event) {
     }
     else {
       if(window.pollForInputEvents(&event)) handleEvent(event);
-      frame_no ++;
-      std::cout << "Drawn frame " << frame_no << "; ";
-      draw();
-      //writePPM();
-      // Wait for the PPM to be written. Increase this value for raster/raytrace
-      //SDL_Delay(1000);
-      rotateTeaPot(10.0f);
-      camera.moveAlongAnimArc(-10.0f);
-      camera.lookAt(getCentreOf("logo"));
 
-      window.renderFrame();
+      if (animating) {
+        frame_no ++;
+        std::cout << "fr_" << frame_no << "; ";
+        draw();
+        //writePPM();
+        // Wait for the PPM to be written. Increase this value for raster/raytrace
+        //SDL_Delay(1000);
+        rotateTeaPot(10.0f);
+        camera.moveAlongAnimArc(-10.0f);
+        camera.lookAt(getCentreOf("logo"));
+
+        window.renderFrame();
+      }
     }
   }
 }
