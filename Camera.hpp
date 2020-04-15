@@ -11,7 +11,7 @@ class Camera {
     // The position gives view of inner corner of box where the box fills the
     // bkgd completely (with focal length > 500 ish).
     //vec3 position = vec3(2000.f, 1000.f, 2600.f);
-    vec3 position = vec3(2380.0f, 758.0f, 780.0f);
+    vec3 position = vec3(3000.0f, 758.0f, 780.0f);
     // Always set the initial orientation manually to get signs right, then
     // only manipulate via lookAt, preferably in small increments, to minimise
     // likelihood of breakage.
@@ -22,7 +22,7 @@ class Camera {
                             0, -1, 0,    // up
                             -1, 0, 0);  // forward
     // Larger focal length means camera is more zoomed in (telephoto/smaller FOV)
-    float focalLength = 640;
+    float focalLength = 800;
 
     // For simplicity, the arc will only be in the x/z plane (y stays constant).
     // Want to move left along arc, so decrement x as required, and we will
