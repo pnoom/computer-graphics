@@ -837,6 +837,14 @@ void handleEvent(SDL_Event event) {
         || camera.position.z <= 740.0f || camera.position.z > 4000.0f) {
       //camera.printCamera();
       animating = false;
+      for (int i = 0; i < 10; i++) {
+        frame_no ++;
+        std::cout << "fr_" << frame_no << "; ";
+        fflush(stdout);
+        //writePPM();
+        // Wait for the PPM to be written. Increase this value for raster/raytrace
+        //SDL_Delay(1000);
+      }
       std::cout << "\nFINISHED!\n";
     }
     else {
@@ -850,9 +858,11 @@ void handleEvent(SDL_Event event) {
         //writePPM();
         // Wait for the PPM to be written. Increase this value for raster/raytrace
         //SDL_Delay(1000);
-        rotateTeaPot(10.0f);
-        camera.moveAlongAnimArc(-10.0f);
-        camera.lookAt(getCentreOf("logo"));
+        if (frame_no > 10) {
+          rotateTeaPot(10.0f);
+          camera.moveAlongAnimArc(-10.0f);
+          camera.lookAt(getCentreOf("logo"));
+        }
 
         window.renderFrame();
       }
