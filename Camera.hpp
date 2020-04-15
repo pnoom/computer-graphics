@@ -20,6 +20,18 @@ class Camera {
     // Larger focal length means camera is more zoomed in (telephoto/smaller FOV)
     float focalLength = 600;
 
+    // For simplicity, the arc will only be in the x/z plane (y stays constant).
+    // Want to move left along arc, so decrement x as required, and we will
+    // find the corresponding z using z^2 = r^2 - x^2
+    float animArcRadiusSquared = (position.x*position.x) + (position.z*position.z);
+
+    void moveAlongAnimArc(float dx) {
+      float newx = position.x + dx;
+      float newz = sqrtf(animArcRadiusSquared - (newx*newx));
+      float dz = newz - position.z;
+      moveBy(dx, 0.0f, dz);
+    }
+
     Camera () {}
 
     void moveBy(float x, float y, float z) {

@@ -754,6 +754,12 @@ void handleEvent(SDL_Event event) {
       cout << "C: CLEARING SCREEN" << endl;
       clear = true;
     }
+    else if(event.key.keysym.sym == SDLK_j) {
+      cout << "J: MOVE ALONG ANIM ARC" << endl;
+      // Should be -ve, but whatever
+      camera.moveAlongAnimArc(10.0f);
+      camera.lookAt(getCentreOf("logo"));
+    }
     if (clear)
       clearScreen();
     else
