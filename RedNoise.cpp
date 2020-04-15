@@ -61,6 +61,7 @@ Camera camera;
 View_mode current_mode;
 Draw_buf buf_mode;
 Light light;
+bool animating = false;
 
 int number_of_AA_samples = 1;
 
@@ -806,8 +807,15 @@ void handleEvent(SDL_Event event) {
     }
     else if(event.key.keysym.sym == SDLK_t) {
       cout << "T: ROTATE TEAPOT" << endl;
-      // Should be -ve, but whatever
       rotateTeaPot(10.0f);
+    }
+    else if(event.key.keysym.sym == SDLK_g) {
+      cout << "G: GO (START ANIMATION)" << endl;
+      animating = true;
+    }
+    else if(event.key.keysym.sym == SDLK_h) {
+      cout << "H: HALT (STOP ANIMATION)" << endl;
+      animating = false;
     }
     if (clear)
       clearScreen();
@@ -815,6 +823,24 @@ void handleEvent(SDL_Event event) {
       draw();
   }
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
+
+  while (animating) {
+    if (camera.position.x <= 1000.0f || camera.position.x > 4000.0f
+        || camera.position.z <= 1000.0f || camera.position.z > 4000.0f) {
+      animating = false;
+    }
+    else {
+      if(window.pollForInputEvents(&event)) handleEvent(event);
+
+      draw();
+      //writePPM();
+      rotateTeaPot(10.0f);
+      camera.moveAlongAnimArc(10.0f);
+      camera.lookAt(getCentreOf("logo"));
+
+      window.renderFrame();
+    }
+  }
 }
 
 int main(int argc, char* argv[]) {
