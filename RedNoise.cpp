@@ -840,10 +840,11 @@ void handleEvent(SDL_Event event) {
       if (animating) {
         frame_no ++;
         std::cout << "fr_" << frame_no << "; ";
+        fflush(stdout);
         draw();
-        writePPM();
+        //writePPM();
         // Wait for the PPM to be written. Increase this value for raster/raytrace
-        SDL_Delay(1000);
+        //SDL_Delay(1000);
         rotateTeaPot(10.0f);
         camera.moveAlongAnimArc(-10.0f);
         camera.lookAt(getCentreOf("logo"));
