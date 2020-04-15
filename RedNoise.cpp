@@ -865,7 +865,13 @@ void handleEvent(SDL_Event event) {
           camera.moveAlongAnimArc(-speed);
           camera.lookAt(getCentreOf("logo"));
           light.Position.z += 4.0f;
-          if (light.Position.z > 750.0f) light.Position.z += 2.5f;
+          if (light.Position.z > 750.0f) {
+            light.Position.z += 5.0f;
+            light.Position.x -= 4.0f;
+            light.Position.y -= 3.0f;
+            light.Spread -= 0.01f;
+            light.Intensity += 15.0f;
+          }
         }
 
         window.renderFrame();
