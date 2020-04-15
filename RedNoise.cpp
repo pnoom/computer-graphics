@@ -864,6 +864,7 @@ void handleEvent(SDL_Event event) {
           if (speed > 20.0f) speed = 20.0f;
           camera.moveAlongAnimArc(-speed);
           camera.lookAt(getCentreOf("logo"));
+          light.Position.z += 4.0f;
         }
 
         window.renderFrame();
@@ -885,7 +886,7 @@ int main(int argc, char* argv[]) {
       camera.position[2] = avgLogo[2];
 
       light.Position = avgLogo;
-      light.Position.z = 870.0f;
+      light.Position.z = 500.0f;
     }
     // if ((gobjects.at(i)).name == "teapot") {
     //   rotateGObjectAboutYInPlace(225.0f, gobjects.at(i));
