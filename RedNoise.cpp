@@ -834,9 +834,9 @@ void handleEvent(SDL_Event event) {
       if(window.pollForInputEvents(&event)) handleEvent(event);
 
       draw();
-      writePPM();
+      //writePPM();
       // Wait for the PPM to be written. Increase this value for raster/raytrace
-      SDL_Delay(1000);
+      //SDL_Delay(1000);
       rotateTeaPot(10.0f);
       camera.moveAlongAnimArc(-10.0f);
       camera.lookAt(getCentreOf("logo"));
@@ -859,13 +859,9 @@ int main(int argc, char* argv[]) {
   }
 
   for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
-    cout << "g.name " << (*g).name << " g.avg ";
+    cout << "Object " << (*g).name << " is centered at ";
     printVec3(averageVerticesOfFaces((*g).faces));
   }
-
-  // Comment this out (and never press L) if you want the raytracer to work
-  // properly
-  //camera.lookAt(getCentreOf("logo"));
 
   texture_buffer = (uint32_t*)malloc(WIDTH*HEIGHT*sizeof(uint32_t));
   window = DrawingWindow(WIDTH, HEIGHT, false);
