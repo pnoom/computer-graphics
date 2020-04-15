@@ -782,7 +782,9 @@ int main(int argc, char* argv[]) {
     printVec3(averageVerticesOfFaces((*g).faces));
   }
 
-  camera.lookAt(getCentreOf("logo"));
+  // Comment this out (and never press L) if you want the raytracer to work
+  // properly
+  //camera.lookAt(getCentreOf("logo"));
 
   texture_buffer = (uint32_t*)malloc(WIDTH*HEIGHT*sizeof(uint32_t));
   window = DrawingWindow(WIDTH, HEIGHT, false);
