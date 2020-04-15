@@ -33,7 +33,7 @@ namespace fs = std::filesystem;
 #define HEIGHT 480
 
 #define SCREENSHOT_DIR "./screenies/"
-#define SCREENSHOT_SUFFIX "_screenie.ppm"
+#define SCREENSHOT_SUFFIX ".ppm"
 
 fs::path screenshotDir;
 
@@ -99,7 +99,8 @@ string getDateTimeString() {
 }
 
 void writePPM() {
-  fs::path screenshotName = fs::path(getDateTimeString() + SCREENSHOT_SUFFIX);
+  std::string frame = std::string(5 - to_string(frame_no).length(), '0') + to_string(frame_no);
+  fs::path screenshotName = fs::path(frame + SCREENSHOT_SUFFIX);
   fs::path outputFile = screenshotDir / screenshotName;
 
   FILE* f = fopen(string(outputFile).c_str(), "w");
@@ -840,9 +841,9 @@ void handleEvent(SDL_Event event) {
         frame_no ++;
         std::cout << "fr_" << frame_no << "; ";
         draw();
-        //writePPM();
+        writePPM();
         // Wait for the PPM to be written. Increase this value for raster/raytrace
-        //SDL_Delay(1000);
+        SDL_Delay(1000);
         rotateTeaPot(10.0f);
         camera.moveAlongAnimArc(-10.0f);
         camera.lookAt(getCentreOf("logo"));
