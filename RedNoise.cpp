@@ -719,6 +719,15 @@ void draw() {
   //camera.printCamera();
 }
 
+void handleFrame() {
+  frame_no ++;
+  std::cout << "fr_" << frame_no << "; ";
+  fflush(stdout);
+  //writePPM();
+  // Wait for the PPM to be written. Increase this value for raster/raytrace
+  //SDL_Delay(1000);
+}
+
 void handleEvent(SDL_Event event) {
   bool clear = false;
   if(event.type == SDL_KEYDOWN) {
@@ -838,12 +847,7 @@ void handleEvent(SDL_Event event) {
       //camera.printCamera();
       animating = false;
       for (int i = 0; i < 10; i++) {
-        frame_no ++;
-        std::cout << "fr_" << frame_no << "; ";
-        fflush(stdout);
-        writePPM();
-        // Wait for the PPM to be written. Increase this value for raster/raytrace
-        SDL_Delay(1000);
+        handleFrame();
       }
       std::cout << "\nFINISHED!\n";
     }
@@ -851,13 +855,9 @@ void handleEvent(SDL_Event event) {
       if(window.pollForInputEvents(&event)) handleEvent(event);
 
       if (animating) {
-        frame_no ++;
-        std::cout << "fr_" << frame_no << "; ";
-        fflush(stdout);
         draw();
-        writePPM();
-        // Wait for the PPM to be written. Increase this value for raster/raytrace
-        SDL_Delay(1000);
+        handleFrame();
+
         if (frame_no > 10) {
           rotateTeaPot(10.0f);
           float speed = (float)(frame_no / 2) - 5.0f;
@@ -883,6 +883,9 @@ int main(int argc, char* argv[]) {
       vec3 avgLogo = getCentreOf("logo");
       camera.position[1] = avgLogo[1];
       camera.position[2] = avgLogo[2];
+
+      light.Position = avgLogo;
+      light.Position.z = 870.0f;
     }
     // if ((gobjects.at(i)).name == "teapot") {
     //   rotateGObjectAboutYInPlace(225.0f, gobjects.at(i));
