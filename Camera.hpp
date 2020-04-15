@@ -8,29 +8,17 @@ class Camera {
   public:
     bool safeRotating = true;
 
-    vec3 position = vec3(2010.f, 995.f, 2660.f);
-    //mat3 orientation = mat3(1, 0, 0,    // right
-    //                             0, -1, 0,    // up
-    //                             0, 0, -1);  // forward
-
-    /*
-    CAMERA position:
-    (3655, 1505, 1125)
-    CAMERA orientation:
-      RIGHT : (0.145966, 0.000211424, -0.989291)
-         UP : (0.226618, -0.973418, 0.033229)
-    FORWARD : (-0.962986, -0.229041, -0.142133)
-
-    */
-    mat3 orientation = mat3(
-      0.82307, 0.000211424, -0.567942,
-      0.130251, -0.973418, 0.1884,
-      -0.552805, -0.229041, -0.801218
-    );
-    // vec3 position = vec3(335.0f, 415.0f, 990.0f);
-    mat3 initOrientation = orientation;
-    //float focalLength = position[2] / 2;
-    float focalLength = 700;
+    // The position gives view of inner corner of box where the box fills the
+    // bkgd completely (with focal length > 500 ish).
+    vec3 position = vec3(2000.f, 1000.f, 2600.f);
+    // Always set the initial orientation manually to get signs right, then
+    // only manipulate via lookAt, preferably in small increments, to minimise
+    // likelihood of breakage.
+    mat3 orientation = mat3(1, 0,  0,    // right
+                            0, -1, 0,    // up
+                            0, 0, -1);  // forward
+    // Larger focal length means camera is more zoomed in (telephoto/smaller FOV)
+    float focalLength = 600;
 
     Camera () {}
 

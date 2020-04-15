@@ -140,6 +140,14 @@ vec3 averageVerticesOfFaces(vector<ModelTriangle> faces) {
   return accVerts / (float)numVerts;
 }
 
+vec3 getCentreOf(string gobjectName) {
+  for (auto g=gobjects.begin(); g != gobjects.end(); g++) {
+    if ((*g).name == gobjectName) return averageVerticesOfFaces((*g).faces);
+  }
+  cout << "Couldn't find a gobject called '" << gobjectName << "'." << endl;
+  return vec3(0.0f,0.0f,0.0f);
+}
+
 void translateGObject(vec3 translationVector, GObject &gobject) {
   for (uint i = 0; i < gobject.faces.size(); i++) {
     for (uint j = 0; j < 3; j++) {
@@ -739,8 +747,8 @@ void handleEvent(SDL_Event event) {
     }
 
     else if(event.key.keysym.sym == SDLK_l) {
-      cout << "L: LOOK AT (0,5,-5)" << endl;
-      camera.lookAt(vec3(0,5,-5));
+      cout << "L: LOOK AT CENTRE OF LOGO" << endl;
+      camera.lookAt(getCentreOf("logo"));
     }
     else if(event.key.keysym.sym == SDLK_c) {
       cout << "C: CLEARING SCREEN" << endl;
@@ -767,6 +775,8 @@ int main(int argc, char* argv[]) {
     cout << "g.name " << (*g).name << " g.avg ";
     printVec3(averageVerticesOfFaces((*g).faces));
   }
+
+  camera.lookAt(getCentreOf("logo"));
 
   texture_buffer = (uint32_t*)malloc(WIDTH*HEIGHT*sizeof(uint32_t));
   window = DrawingWindow(WIDTH, HEIGHT, false);
