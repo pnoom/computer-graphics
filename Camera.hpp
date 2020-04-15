@@ -72,10 +72,10 @@ class Camera {
       orientation[2] = temp;
       temp = glm::cross(orientation[2], vec3(0,-1,0));
       temp = glm::normalize(temp);
-      orientation[0] = temp;
+      orientation[0] = -temp;
       temp = glm::cross(orientation[0], orientation[2]);
       temp = glm::normalize(temp);
-      orientation[1] = temp;
+      orientation[1] = -temp;
     }
 
   private:
