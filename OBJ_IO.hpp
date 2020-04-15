@@ -214,6 +214,17 @@ class OBJ_IO {
           lineStream >> a >> b;
           textureVertex[0] = a;
           textureVertex[1] = b;
+
+          // Normalise texture vertices in case of erroneous .objs
+          if (a > 1 || a < 0) {
+            textureVertex[0] = abs(a);
+            if (textureVertex[0] > 1) textureVertex[0] = 1 / textureVertex[0];
+          }
+          if (b > 1 || b < 0) {
+            textureVertex[1] = abs(b);
+            if (textureVertex[1] > 1) textureVertex[1] = 1 / textureVertex[1];
+          }
+
           structure.allTextureVertices.push_back(textureVertex);
         }
         else if (linePrefix == "f") {
