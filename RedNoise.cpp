@@ -825,8 +825,9 @@ void handleEvent(SDL_Event event) {
   else if(event.type == SDL_MOUSEBUTTONDOWN) cout << "MOUSE CLICKED" << endl;
 
   while (animating) {
-    if (camera.position.x <= 1000.0f || camera.position.x > 4000.0f
-        || camera.position.z <= 1000.0f || camera.position.z > 4000.0f) {
+    if (camera.position.x <= 750.0f || camera.position.x > 4000.0f
+        || camera.position.z <= 750.0f || camera.position.z > 4000.0f) {
+      //camera.printCamera();
       animating = false;
     }
     else {
